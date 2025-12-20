@@ -1,0 +1,281 @@
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import { User } from '../models/User.js';
+import { Business } from '../models/Business.js';
+import { Product } from '../models/Product.js';
+import { Sale } from '../models/Sale.js';
+import { Expense } from '../models/Expense.js';
+import { auth as authMiddleware } from '../middleware/auth.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const router = express.Router();
+
+// Register
+router.post('/register', async (req, res) => {
+    try {
+        const { email, password, displayName } = req.body;
+        const user = new User({ email, password, displayName });
+        await user.save();
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
+        res.status(201).send({ user, token });
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user || !(await user.comparePassword(password))) {
+            return res.status(401).send({ error: 'Login failed! Check authentication credentials' });
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
+        res.send({ user, token });
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// Me
+router.get('/me', authMiddleware, async (req, res) => {
+    res.send(req.user);
+});
+
+// Google Auth
+router.post('/google', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, picture, sub: googleId } = payload;
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = new User({
+                email,
+                displayName: name,
+                photoURL: picture,
+                googleId,
+                password: Math.random().toString(36).slice(-10) // Random password for internal use
+            });
+            await user.save();
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
+        res.send({ user, token });
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        res.status(401).send({ error: 'Google authentication failed' });
+    }
+});
+
+
+
+// Sync Local Data
+router.post('/sync', authMiddleware, async (req, res) => {
+    try {
+        // resolutions: { [localId]: 'MERGE' | 'REPLACE' | 'KEEP_SEPARATE' }
+        // allowedIds: string[] | undefined (If provided, DELETE businesses not in this list)
+        const { localBusinesses, products, sales, expenses, resolutions = {}, allowedIds } = req.body;
+        const userId = req.user._id.toString();
+
+        console.log(`[SYNC] Received payload from User ${userId}:`, {
+            businesses: localBusinesses.length,
+            resolutions,
+            allowedIds: allowedIds ? allowedIds.length : 'ALL'
+        });
+
+        // 0. Handle Sync Limit Deletions (Pruning)
+        if (allowedIds && Array.isArray(allowedIds)) {
+            console.log(`[SYNC] Pruning businesses not in allowed list:`, allowedIds);
+
+            // Fetch all user businesses to filter safely in memory (Avoids ObjectId CastError with UUIDs)
+            const allUserBusinesses = await Business.find({ ownerId: userId });
+
+            const businessesToDelete = allUserBusinesses.filter(b => {
+                const idMatch = allowedIds.includes(b.id);
+                const oidMatch = allowedIds.includes(b._id.toString());
+                return !idMatch && !oidMatch;
+            });
+
+            if (businessesToDelete.length > 0) {
+                const deleteIds = businessesToDelete.map(b => b.id);
+                const deleteOids = businessesToDelete.map(b => b._id);
+
+                console.log(`[SYNC] Deleting ${businessesToDelete.length} pruned businesses:`, deleteIds);
+
+                await Business.deleteMany({ _id: { $in: deleteOids } });
+                await Product.deleteMany({ businessId: { $in: deleteIds } });
+                await Sale.deleteMany({ businessId: { $in: deleteIds } });
+                await Expense.deleteMany({ businessId: { $in: deleteIds } });
+            }
+        }
+
+        // 1. Fetch Existing Cloud Businesses
+        const existingBusinesses = await Business.find({ ownerId: userId });
+
+        // 2. Identify Collisions
+        const conflicts = [];
+        let projectedNewCount = existingBusinesses.length;
+
+        for (const localBiz of localBusinesses) {
+            const match = existingBusinesses.find(b => b.name === localBiz.name);
+            const resolution = resolutions[localBiz.id];
+
+            if (match) {
+                if (!resolution) {
+                    conflicts.push({ local: localBiz, cloud: match });
+                } else {
+                    if (resolution === 'KEEP_SEPARATE') projectedNewCount++;
+                }
+            } else {
+                projectedNewCount++;
+            }
+        }
+
+        if (conflicts.length > 0) {
+            console.log(`[SYNC] Name Collisions Detected: ${conflicts.length}`);
+            return res.status(409).send({ error: 'NAME_COLLISION', conflicts });
+        }
+
+        // 3. Check Plan Limits
+        const PLAN_LIMITS = { 'FREE': 2, 'PRO': 10, 'UNLIMITED': 999 };
+        const userPlan = req.user.plan || 'FREE';
+        const limit = PLAN_LIMITS[userPlan];
+
+        if (projectedNewCount > limit) {
+            console.log(`[SYNC] Plan Limit Exceeded: ${projectedNewCount} > ${limit}`);
+            return res.status(409).send({
+                error: 'PLAN_LIMIT_EXCEEDED',
+                limit,
+                currentCount: existingBusinesses.length,
+                newCount: projectedNewCount,
+                existingBusinesses
+            });
+        }
+
+        const syncedBusinesses = [];
+        let stats = { products: 0, sales: 0, expenses: 0 };
+
+        // 4. Execution
+        for (const localBiz of localBusinesses) {
+            const match = existingBusinesses.find(b => b.name === localBiz.name);
+            const resolution = resolutions[localBiz.id];
+            let targetBusinessId;
+
+            if (match) {
+                if (resolution === 'MERGE') {
+                    console.log(`[SYNC] Merging Business: ${localBiz.name}`);
+                    targetBusinessId = match._id.toString();
+                    syncedBusinesses.push(match);
+                } else if (resolution === 'REPLACE') {
+                    console.log(`[SYNC] Replacing Business: ${localBiz.name}`);
+                    targetBusinessId = match._id.toString();
+                    await Product.deleteMany({ businessId: targetBusinessId });
+                    await Sale.deleteMany({ businessId: targetBusinessId });
+                    await Expense.deleteMany({ businessId: targetBusinessId });
+
+                    Object.assign(match, localBiz);
+                    match.ownerId = userId;
+                    await match.save();
+                    syncedBusinesses.push(match);
+                } else if (resolution === 'KEEP_SEPARATE') {
+                    console.log(`[SYNC] Keeping Separate: ${localBiz.name}`);
+                    const newBiz = new Business({
+                        ...localBiz,
+                        name: `${localBiz.name} (Local)`,
+                        ownerId: userId,
+                        collaborators: [{ userId: userId, name: req.user.displayName || 'Owner', role: 'OWNER', status: 'ACTIVE' }]
+                    });
+                    await newBiz.save();
+                    targetBusinessId = newBiz.id;
+                    syncedBusinesses.push(newBiz);
+                }
+            } else {
+                console.log(`[SYNC] Creating New Business: ${localBiz.name}`);
+                const exists = await Business.findOne({ id: localBiz.id }); // Check if ID already claimed?
+                if (exists && exists.ownerId === userId) {
+                    targetBusinessId = exists.id;
+                    syncedBusinesses.push(exists);
+                } else {
+                    const newBiz = new Business({
+                        ...localBiz,
+                        ownerId: userId,
+                        collaborators: [{ userId: userId, name: req.user.displayName || 'Owner', role: 'OWNER', status: 'ACTIVE' }]
+                    });
+                    await newBiz.save();
+                    targetBusinessId = newBiz.id;
+                    syncedBusinesses.push(newBiz);
+                }
+            }
+
+            if (targetBusinessId) {
+                const bizProducts = products.filter(p => p.businessId === localBiz.id);
+                const bizSales = sales.filter(s => s.businessId === localBiz.id);
+                const bizExpenses = expenses.filter(e => e.businessId === localBiz.id);
+
+                stats.products += bizProducts.length;
+                stats.sales += bizSales.length;
+                stats.expenses += bizExpenses.length;
+
+                const performBulkInsert = async (Model, items) => {
+                    if (!items.length) return;
+                    const operations = items.map(item => ({
+                        updateOne: {
+                            filter: { id: item.id }, // Upsert by UUID
+                            update: { $set: { ...item, _id: undefined, businessId: targetBusinessId } },
+                            upsert: true
+                        }
+                    }));
+                    await Model.bulkWrite(operations);
+                };
+
+                await performBulkInsert(Product, bizProducts);
+                await performBulkInsert(Sale, bizSales);
+                await performBulkInsert(Expense, bizExpenses);
+            }
+        }
+
+        console.log(`[SYNC] Success. Synced:`, stats);
+        res.send({ success: true, businesses: syncedBusinesses });
+
+    } catch (error) {
+        console.error("Sync Failed:", error);
+        res.status(500).send({ error: 'Sync failed', details: error.message });
+    }
+});
+
+// Guest Login (Simulated)
+router.post('/guest', async (req, res) => {
+    try {
+        const guestId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`👤 Attempting Guest Login: ${guestId}`);
+
+        const user = new User({
+            email: `${guestId}@guest.com`,
+            password: 'guest_password',
+            displayName: 'Guest User'
+        });
+        await user.save();
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1d' });
+        console.log(`✅ Guest Login Success: ${guestId}`);
+        res.send({ user, token });
+    } catch (error) {
+        console.error('❌ Guest Login Failed:', error);
+        res.status(400).send({ error: 'Guest login failed', details: error.message });
+    }
+});
+
+export default router;
