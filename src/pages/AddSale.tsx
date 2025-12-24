@@ -26,14 +26,14 @@ export function AddSale() {
     const selectedProduct = products.find(p => p.id === selectedProductId);
 
     const filteredProducts = useMemo(() =>
-        products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
+        products.filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase())),
         [products, searchTerm]
     );
 
     // Update selling price when product changes
     useEffect(() => {
         if (selectedProduct) {
-            setSellingPrice(selectedProduct.sellingPrice.toString());
+            setSellingPrice((selectedProduct.sellingPrice || 0).toString());
         }
     }, [selectedProduct]);
 
@@ -42,7 +42,7 @@ export function AddSale() {
         const qty = parseInt(quantity) || 0;
         const price = parseFloat(sellingPrice) || 0;
         const revenue = price * qty;
-        const cost = selectedProduct.costPrice * qty;
+        const cost = (selectedProduct.costPrice || 0) * qty;
         return {
             revenue,
             cost,

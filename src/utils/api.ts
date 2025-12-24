@@ -1,6 +1,11 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
+    // 1. Manual Override (For mobile testing)
+    const customUrl = localStorage.getItem('custom_api_url');
+    if (customUrl) return customUrl;
+
+    // 2. Environment Variable
     const envUrl = import.meta.env.VITE_API_URL;
     if (envUrl) return envUrl;
 
@@ -14,11 +19,12 @@ const getBaseUrl = () => {
     return `${window.location.protocol}//${hostname}:5000/api`;
 };
 
-const API_URL = getBaseUrl();
-
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: getBaseUrl(),
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
 // Add token to requests

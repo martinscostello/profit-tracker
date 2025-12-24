@@ -16,15 +16,15 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true
     },
     GoogleAuth: {
-      scopes: ['profile', 'email'],
+      scopes: ['profile', 'email', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
       serverClientId: '740425791784-9fjocgu3er172e39uohspf1udq6e0are.apps.googleusercontent.com',
       forceCodeForRefreshToken: true
     }
   },
   server: {
-    androidScheme: 'https',
-    hostname: 'localhost',
-    allowNavigation: ['*']
+    androidScheme: 'http', // CRITICAL: Allow HTTP to avoid Mixed Content errors with http API
+    cleartext: true,
+    allowNavigation: ['*', 'http://192.168.1.200:5000']
   }
 };
 

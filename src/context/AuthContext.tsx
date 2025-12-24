@@ -16,7 +16,7 @@ interface User {
 interface AuthContextType {
     currentUser: User | null;
     loading: boolean;
-    googleLogin: (credential: string) => Promise<void>;
+    googleLogin: (credential: string, accessToken?: string) => Promise<void>;
     signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
     updateProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>;
@@ -52,17 +52,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('auth_token');
+            // Try to load cached profile immediately for speed
+            const cachedUserStr = localStorage.getItem('user_profile');
+            let hasCachedUser = false;
+
+            if (cachedUserStr) {
+                try {
+                    const user = JSON.parse(cachedUserStr);
+                    setCurrentUser(user);
+                    hasCachedUser = true;
+                    setLoading(false); // OPTIMISTIC LOAD: Show app immediately
+                } catch (e) { console.error("Cached user parse error", e); }
+            }
+
             if (!token) {
                 setLoading(false);
                 return;
             }
 
             try {
-                const res = await api.get('/auth/me');
+                // If we have a token, we try to verify it with server
+                // Add Timeout to fail fast if server is unreachable
+                const res = await api.get('/auth/me', { timeout: 5000 });
                 setCurrentUser(res.data);
-            } catch (error) {
+                // Update cache
+                localStorage.setItem('user_profile', JSON.stringify(res.data));
+            } catch (error: any) {
                 console.error("Auth check failed:", error);
-                localStorage.removeItem('auth_token');
+
+                // CRITICAL FIX: If IT IS A NETWORK ERROR (Server Offline), 
+                // DO NOT LOG OUT. Keep the cached user if it exists.
+                if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response || error.code === 'ECONNABORTED') {
+                    console.log("Offline mode detected. Keeping cached session.");
+                    if (!hasCachedUser && !cachedUserStr) {
+                        // If no cache and offline, we must stop loading eventually
+                        setLoading(false);
+                    }
+                } else {
+                    // Actual Auth Error (401), clear token
+                    // Only clear if we actually received a response (i.e. server rejected us)
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_profile');
+                    setCurrentUser(null);
+                }
             } finally {
                 setLoading(false);
             }
@@ -150,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const googleLogin = async (idToken: string) => {
+    const googleLogin = async (idToken: string, accessToken?: string) => {
         try {
             // 1. Authenticate & Get JWT
             const loginRes = await api.post('/auth/google', { idToken });
@@ -159,12 +191,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Temporarily set token for API calls
             localStorage.setItem('auth_token', token);
 
+            // Store Google Access Token for Sheets API (if provided)
+            if (accessToken) {
+                localStorage.setItem('google_access_token', accessToken);
+            }
+
             // 2. Sync
             const success = await performSync(idToken);
             if (!success) return; // Conflict modal is open
 
             // 3. Finalize Login
             setCurrentUser(user);
+            localStorage.setItem('user_profile', JSON.stringify(user));
             showToast("Signed in with Google", "success");
         } catch (error: any) {
             console.error("Google Login Failed:", error);
@@ -242,8 +280,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Logout simply disconnects the cloud account. Local data REMAINS on the device.
         // User continues as "Offline/Guest" owner of the local data.
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_profile'); // CRITICAL: Clear cached profile to prevent auto-login
+        localStorage.removeItem('active_business_id'); // Optional: Force re-selection
         setCurrentUser(null);
-        showToast("Logged out. You are now working offline.", "info");
+        showToast("Logged out.", "info");
         // We reload to reset running state/contexts to "Guest" mode properly
         window.location.reload();
     };

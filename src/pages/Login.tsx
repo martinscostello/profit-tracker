@@ -3,13 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Layout } from '../components/layout/Layout';
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
-import api from '../utils/api';
+import { GoogleLogin } from '@react-oauth/google';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 
 export function Login() {
-    const { googleLogin, signInAsGuest, currentUser } = useAuth();
+    const { googleLogin, currentUser } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
@@ -66,7 +65,7 @@ export function Login() {
         try {
             const user = await GoogleAuth.signIn();
             if (user.authentication.idToken) {
-                await googleLogin(user.authentication.idToken);
+                await googleLogin(user.authentication.idToken, user.authentication.accessToken);
                 navigate(from, { replace: true });
             }
         } catch (err: any) {
@@ -80,12 +79,14 @@ export function Login() {
         }
     };
 
+    // Server Config Handlers Removed (Cleanup)
+
     if (currentUser) {
         return null;
     }
 
     return (
-        <Layout>
+        <Layout ignoreLock={true}>
             <div style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 height: '80vh', padding: '2rem', textAlign: 'center'
@@ -99,6 +100,7 @@ export function Login() {
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
                         Welcome to DailyProfit
                     </h1>
+                    {/* ... rest of UI ... */}
                     <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
                         Sign in to sync your data and manage your business from anywhere.
                     </p>
@@ -161,12 +163,12 @@ export function Login() {
                                 Continue with Google
                             </button>
                         ) : (
-                            <>
+                            <div className="w-full flex justify-center relative">
                                 <GoogleLogin
-                                    onSuccess={(credentialResponse: CredentialResponse) => {
+                                    onSuccess={response => {
                                         setIsGoogleLoading(false);
-                                        if (credentialResponse.credential) {
-                                            googleLogin(credentialResponse.credential).then(() => {
+                                        if (response.credential) {
+                                            googleLogin(response.credential).then(() => {
                                                 navigate(from, { replace: true });
                                             }).catch(err => {
                                                 setError('Google Sync failed: ' + (err.response?.data?.error || err.message));
@@ -174,57 +176,27 @@ export function Login() {
                                         }
                                     }}
                                     onError={() => {
-                                        console.error('Google Login Error');
-                                        setError('Google Sign-In failed to load. Check console/network.');
+                                        console.log('Login Failed');
                                         setIsGoogleLoading(false);
                                     }}
+                                    useOneTap={false}
+                                    type="standard"
                                     theme="filled_blue"
                                     size="large"
-                                    width="280" // Slightly smaller for better mobile fit
+                                    width="280"
                                     shape="rectangular"
                                 />
                                 {isGoogleLoading && (
                                     <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        fontSize: '0.875rem',
-                                        color: 'var(--color-text-muted)',
-                                        pointerEvents: 'none'
+                                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                        fontSize: '0.875rem', color: '#9ca3af', pointerEvents: 'none'
                                     }}>
-                                        Loading Google Sign-In...
+                                        Loading...
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
                     </div>
-
-                    <button
-                        onClick={async () => {
-                            try {
-                                await signInAsGuest();
-                                navigate(from, { replace: true });
-                            } catch (err: any) {
-                                console.error("Guest login error:", err);
-                                const msg = err.response?.data?.details || err.message || 'Unknown error';
-                                setError(`Guest Login Failed: ${msg}. (Target: ${api.defaults.baseURL})`);
-                                showToast(`Login Error: ${msg}`, 'error');
-                            }
-                        }}
-                        style={{
-                            width: '100%',
-                            padding: '1rem',
-                            backgroundColor: 'white',
-                            color: '#64748b',
-                            border: '2px solid #e2e8f0',
-                            borderRadius: '0.5rem',
-                            fontSize: '1rem', fontWeight: '600',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Continue as Guest
-                    </button>
                 </div>
             </div>
         </Layout>

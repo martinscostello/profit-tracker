@@ -4,12 +4,12 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export function Layout({ children, showNav = true, disablePadding = false }: { children: ReactNode; showNav?: boolean; disablePadding?: boolean }) {
+export function Layout({ children, showNav = true, disablePadding = false, ignoreLock = false }: { children: ReactNode; showNav?: boolean; disablePadding?: boolean; ignoreLock?: boolean }) {
     const { role } = usePermissions();
     const navigate = useNavigate();
 
     // Manager Lockout for Offline Access
-    if (role === 'LOCKED') {
+    if (role === 'LOCKED' && !ignoreLock) {
         return (
             <div style={{
                 height: '100vh',

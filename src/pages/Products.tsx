@@ -1,5 +1,4 @@
-
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext';
@@ -7,9 +6,11 @@ import { useData } from '../context/DataContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
-import { Plus, Search, Tag, Upload } from 'lucide-react';
+import { Plus, Search, Tag, Upload, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { PinModal } from '../components/ui/PinModal';
+import { SheetLinkModal } from '../components/products/SheetLinkModal';
+import { GoogleSheetsService } from '../services/GoogleSheetsService';
 
 export function Products() {
     const { products, business, addProduct, updateProduct } = useData();
@@ -23,7 +24,107 @@ export function Products() {
 
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
+
+    // Sync State
+    const [isSyncing, setIsSyncing] = useState(false);
+    // Load per-business sheet name
+    const [linkedSheetName, setLinkedSheetName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (business?.id) {
+            setLinkedSheetName(localStorage.getItem(`linked_sheet_name_${business.id}`));
+        }
+    }, [business?.id]);
+
+    const handleImportProducts = (importedProducts: any[]) => {
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        importedProducts.forEach(product => {
+            const existingProduct = products.find(p => p.name.toLowerCase() === product.name.toLowerCase());
+            if (existingProduct) {
+                updateProduct(existingProduct.id, {
+                    ...existingProduct,
+                    ...product,
+                    stockQuantity: product.stockQuantity // Overwrite stock from sheet
+                });
+                updatedCount++;
+            } else {
+                addProduct({
+                    businessId: business.id,
+                    ...product,
+                    totalSold: 0
+                });
+                addedCount++;
+            }
+        });
+
+        if (addedCount > 0 || updatedCount > 0) {
+            showToast(`Synced: ${addedCount} Added, ${updatedCount} Updated`, 'success');
+        } else {
+            showToast('Sync Complete: No changes detected.', 'info');
+        }
+        setIsImportModalOpen(false);
+        // Update name if just linked
+        if (business?.id) {
+            setLinkedSheetName(localStorage.getItem(`linked_sheet_name_${business.id}`));
+        }
+    };
+
+    const handleManualSync = async () => {
+        if (!business?.id) return;
+
+        const sheetId = localStorage.getItem(`linked_sheet_id_${business.id}`);
+        const token = localStorage.getItem('google_access_token'); // Token remains global
+
+        if (!sheetId || !token) {
+            showToast("No sheet linked. Please link a sheet first.", "error");
+            return;
+        }
+
+        setIsSyncing(true);
+        try {
+            // Self-heal: Fetch name if missing or refresh it
+            try {
+                const meta = await GoogleSheetsService.fetchSheetMetadata(token, sheetId);
+                if (meta.properties?.title) {
+                    setLinkedSheetName(meta.properties.title);
+                    localStorage.setItem(`linked_sheet_name_${business.id}`, meta.properties.title);
+                }
+            } catch (ignore) { console.warn("Meta fetch failed", ignore); }
+
+            const rows = await GoogleSheetsService.fetchSheetData(token, sheetId);
+            const prods = GoogleSheetsService.parseProducts(rows);
+            if (prods.length > 0) {
+                handleImportProducts(prods);
+            } else {
+                showToast("Synced, but sheet appears empty.", "info");
+            }
+        } catch (e: any) {
+            console.error("Manual sync failed", e);
+            if (e.message?.includes('401')) {
+                showToast("Session Expired. Please Log Out & Log In to refresh Google permissions.", "error");
+            } else {
+                showToast("Sync Failed: " + (e.message || "Network Error"), "error");
+            }
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    // Auto-Sync on Mount or Business Switch
+    useEffect(() => {
+        if (!business?.id) return;
+        const sheetId = localStorage.getItem(`linked_sheet_id_${business.id}`);
+        const token = localStorage.getItem('google_access_token');
+        if (sheetId && token) {
+            handleManualSync(); // Reuse logic
+        } else {
+            setLinkedSheetName(null); // Clear if no sheet for this business
+        }
+    }, [business?.id]);
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,11 +288,36 @@ export function Products() {
                     zIndex: 10
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Products</h1>
+                        <div>
+                            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Products</h1>
+                            {linkedSheetName && (
+                                <div style={{ fontSize: '0.75rem', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                                    <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#16a34a' }} />
+                                    Synced with: {linkedSheetName}
+                                </div>
+                            )}
+                        </div>
+
                         {can('canAddProducts') && (
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
-                                    onClick={handleImportClick}
+                                    onClick={handleManualSync}
+                                    style={{
+                                        backgroundColor: 'white',
+                                        color: 'var(--color-text)',
+                                        border: '1px solid var(--color-border)',
+                                        width: '2.5rem', height: '2.5rem',
+                                        borderRadius: '50%',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer'
+                                    }}
+                                    title="Sync now"
+                                >
+                                    <RefreshCw size={22} className={isSyncing ? "spin-slick" : ""} />
+                                </button>
+
+                                <button
+                                    onClick={() => setIsImportModalOpen(true)}
                                     style={{
                                         backgroundColor: 'white',
                                         color: 'var(--color-text)',
@@ -205,7 +331,7 @@ export function Products() {
                                         fontWeight: '600'
                                     }}
                                 >
-                                    <Upload size={16} /> Import
+                                    <Upload size={16} /> {linkedSheetName ? 'Change Sheet' : 'Import'}
                                 </button>
                                 <button
                                     onClick={() => navigate('/products/add')}
@@ -235,8 +361,7 @@ export function Products() {
                     padding: '0 1.5rem 6rem 1.5rem',
                     display: 'flex', flexDirection: 'column',
                 }}>
-                    {/* Search - placed inside scrollable area or fixed? User said "Title, import and add buttons" stationary. 
-                        Usually search allows scrolling away. I will keep it in scrollable area for now. */}
+                    {/* Search */}
                     <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                         <Search size={20} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-primary)' }} />
                         <input
@@ -278,7 +403,7 @@ export function Products() {
                                 </div>
                                 <p style={{ marginBottom: '1rem' }}>No products yet. Add your first product.</p>
                                 <button
-                                    onClick={() => navigate('/products/add')}
+                                    onClick={() => navigate('/products/add')} // Changed to navigate
                                     style={{
                                         backgroundColor: 'var(--color-primary)',
                                         color: 'white',
@@ -346,7 +471,20 @@ export function Products() {
                     mode={pinMode}
                     onSuccess={handlePinSuccess}
                 />
+
+                <SheetLinkModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => setIsImportModalOpen(false)}
+                    onImportProducts={handleImportProducts}
+                    onLocalImport={handleImportClick}
+                    currentSheetName={linkedSheetName}
+                    businessId={business?.id}
+                />
             </div >
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spin-slick { animation: spin 1s linear infinite; }
+            `}</style>
         </Layout >
     );
 }

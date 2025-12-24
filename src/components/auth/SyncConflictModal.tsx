@@ -19,12 +19,12 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
     const [selectedIds, setSelectedIds] = useState<string[]>([]); // For Plan Limit
     const [resolutions, setResolutions] = useState<Record<string, 'MERGE' | 'REPLACE' | 'KEEP_SEPARATE'>>({}); // For Name Collision
 
-    // Initialize resolutions with default 'MERGE' maybe? Or force choice.
+    // Initialize resolutions with default 'KEEP_SEPARATE' to avoid accidental merges
     useEffect(() => {
         if (type === 'NAME_COLLISION' && conflicts) {
-            // Default to empty or pre-select 'MERGE'
             const initial: any = {};
-            conflicts.forEach(c => initial[c.local.id] = 'MERGE');
+            // DEFAULT IS NOW KEEP_SEPARATE
+            conflicts.forEach(c => initial[c.local.id] = 'KEEP_SEPARATE');
             setResolutions(initial);
         }
     }, [isOpen, type, conflicts]);

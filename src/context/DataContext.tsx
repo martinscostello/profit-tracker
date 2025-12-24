@@ -1,7 +1,9 @@
+
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useToast } from './ToastContext';
 import { StorageService } from '../services/StorageService';
 import { ApiService } from '../services/ApiService';
+import { GoogleSheetsService } from '../services/GoogleSheetsService';
 import { useAuth } from './AuthContext';
 import { io, Socket } from 'socket.io-client';
 import type { Product, Sale, BusinessProfile, Expense } from '../types';
@@ -58,6 +60,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     };
 
+    // Migration for Legacy Keys (Fixing the "Trailing Space" bug)
+    useEffect(() => {
+        const migrateLegacyKeys = () => {
+            try {
+                const keys = Object.keys(localStorage);
+                let migratedCount = 0;
+                keys.forEach(key => {
+                    // Check for keys ending with space: "products_UUID "
+                    // We only migrate business-prefixed data keys
+                    if ((key.startsWith('products_') || key.startsWith('sales_') || key.startsWith('expenses_') || key.startsWith('expenseCategories_')) && key.endsWith(' ')) {
+                        const cleanKey = key.trim();
+                        // Only migrate if destination doesn't exist to avoid overwriting newer data
+                        // But since the bug was pervasive, the "Space" key likely holds the truth.
+                        // If clean key exists, we might have a conflict, but usually the clean key would be empty/unused if the app always used the space.
+                        const val = localStorage.getItem(key);
+                        if (val) {
+                            localStorage.setItem(cleanKey, val);
+                            localStorage.removeItem(key); // Cleanup old key
+                            migratedCount++;
+                        }
+                    }
+                });
+                if (migratedCount > 0) console.log(`[Migration] Fixed ${migratedCount} storage keys with trailing spaces.`);
+            } catch (e) {
+                console.error("[Migration] Failed to migrate legacy keys", e);
+            }
+        };
+
+        migrateLegacyKeys();
+    }, []);
+
     // --- State ---
     const [businesses, setBusinesses] = useState<BusinessProfile[]>(() =>
         StorageService.load('businesses', [])
@@ -74,11 +107,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
         StorageService.load('active_business_id', '')
     );
 
-    const [products, setProducts] = useState<Product[]>([]);
-    const [sales, setSales] = useState<Sale[]>([]);
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [products, setProducts] = useState<Product[]>(() => {
+        return activeBusinessId ? StorageService.load(`products_${activeBusinessId}`, []) : [];
+    });
+    const [sales, setSales] = useState<Sale[]>(() => {
+        return activeBusinessId ? StorageService.load(`sales_${activeBusinessId}`, []) : [];
+    });
+    const [expenses, setExpenses] = useState<Expense[]>(() => {
+        return activeBusinessId ? StorageService.load(`expenses_${activeBusinessId}`, []) : [];
+    });
     const DEFAULT_CATEGORIES = ['Fuel', 'Transport', 'Airtime', 'Shop Rent', 'Salaries', 'Market Levies', 'Personal', 'Other'];
-    const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
+    const [expenseCategories, setExpenseCategories] = useState<string[]>(() => {
+        if (!activeBusinessId) return [];
+        const stored = StorageService.load(`expenseCategories_${activeBusinessId}`, []);
+        return stored.length > 0 ? stored : [];
+    });
     const [pendingConsolidation, setPendingConsolidation] = useState<{
         localBusiness: BusinessProfile,
         cloudBusinesses: BusinessProfile[],
@@ -89,18 +132,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [dashboardStats, setDashboardStats] = useState<any>(null);
 
     const calculateLocalStats = () => {
-        // Calculate stats from local state (which includes merged data)
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        // Robust Date Matching (YYYY-MM-DD vs YYYY-MM-DD)
+        const now = new Date();
+        const localDateStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
 
-        const todaySales = sales.filter(s => new Date(s.date).getTime() >= startOfDay);
-        const todayExpenses = expenses.filter(e => new Date(e.date).getTime() >= startOfDay);
+        const todaySales = sales.filter(s => {
+            const d = new Date(s.date);
+            return d.toLocaleDateString('en-CA') === localDateStr;
+        });
+
+        const todayExpenses = expenses.filter(e => {
+            const d = new Date(e.date);
+            return d.toLocaleDateString('en-CA') === localDateStr;
+        });
 
         const revenue = todaySales.reduce((acc, s) => acc + (s.revenue || 0), 0);
-
         const totalExpenses = todayExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-
-        // Use stored profit if available (it should be calculated on sale creation)
         const grossProfit = todaySales.reduce((acc, s) => acc + (s.profit || 0), 0);
 
         return {
@@ -130,6 +177,136 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const business = businesses.find(b => b.id === activeBusinessId) || {
         id: '', name: 'No Active Business', currency: '₦', isPro: false, plan: 'FREE' as const, onboardingCompleted: false, collaborators: []
     };
+
+    const loadCloudData = async () => {
+        setSyncStatus('syncing');
+        try {
+            // 1. Restore Businesses
+            const fetched = await ApiService.getBusinesses();
+
+            // preserve local businesses that are not in cloud yet
+            const currentLocalBusinesses = StorageService.load('businesses', []);
+            const localOnly = currentLocalBusinesses.filter((b: BusinessProfile) => {
+                // Check if this business exists in the fetched cloud list (by ID)
+                // Also assume mongoID (24 chars) vs UUID (36 chars) difference implies local/cloud
+                const existsInCloud = fetched.some((fb: any) => fb.id === b.id);
+                return !existsInCloud && b.id.length > 30; // Rough check for UUID (Local)
+            });
+
+            // Merge: Cloud is Truth for existing, Local appended
+            let combinedBusinesses = [...fetched, ...localOnly];
+
+            // Tag Local Ownership for Offline Access
+            try {
+                const user = await ApiService.getProfile();
+                combinedBusinesses = combinedBusinesses.map((b: any) => ({
+                    ...b,
+                    _isLocalOwner: b.ownerId === user.id
+                }));
+            } catch (e) {
+                console.warn("Failed to tag ownership", e);
+            }
+
+            setBusinesses(combinedBusinesses);
+            StorageService.save('businesses', combinedBusinesses);
+
+            let targetId = activeBusinessId;
+            const activeStillExists = combinedBusinesses.some((b: BusinessProfile) => b.id === activeBusinessId);
+
+            if (!activeStillExists && combinedBusinesses.length > 0) {
+                // Mismatch Detected - Only switch if truly gone
+                targetId = combinedBusinesses[0].id;
+                console.log(`[DataContext] Active Business ID ${activeBusinessId} not found in merged list. Switching to ${targetId}`);
+                if (targetId !== activeBusinessId) {
+                    setActiveBusinessId(targetId);
+                    StorageService.save('active_business_id', targetId);
+                }
+            } else if (!targetId && combinedBusinesses.length > 0) {
+                targetId = combinedBusinesses[0].id;
+                setActiveBusinessId(targetId);
+                StorageService.save('active_business_id', targetId);
+            }
+
+            // 2. Load Data for active business
+            if (targetId) {
+                const [prods, salesDat, exps] = await Promise.all([
+                    ApiService.getProducts(targetId),
+                    ApiService.getSales(targetId),
+                    ApiService.getExpenses(targetId)
+                ]);
+                // Load current local data to preserve unsynced items
+                const localProducts = StorageService.load(`products_${targetId}`, []);
+                const localSales = StorageService.load(`sales_${targetId}`, []);
+                const localExpenses = StorageService.load(`expenses_${targetId}`, []);
+
+                // Merge Strategy: LOCAL IS TRUTH (User Request)
+                // 1. Keep ALL local items exactly as they are (preserving edits, deletes, etc. if we tracked deletes locally)
+                // 2. Add ONLY items from Cloud that are NOT in Local (e.g. added by Manager/Partner)
+                // This prevents "Cloud Revert" where cloud overwrites local progress.
+
+                const mergeItems = (cloudItems: any[], localItems: any[]) => {
+                    const localIds = new Set(localItems.map((i: any) => i.id));
+                    // Find items in Cloud that we don't know about yet
+                    const newFromCloud = cloudItems.filter((i: any) => !localIds.has(i.id));
+
+                    // Combine: Local (Priority) + New Cloud (Additions)
+                    return [...localItems, ...newFromCloud];
+                };
+
+                const mergedProducts = mergeItems(prods, localProducts);
+                setProducts(mergedProducts);
+                StorageService.save(`products_${targetId}`, mergedProducts);
+
+                const mergedSales = mergeItems(salesDat, localSales).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setSales(mergedSales);
+                StorageService.save(`sales_${targetId}`, mergedSales);
+
+                const mergedExpenses = mergeItems(exps, localExpenses).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setExpenses(mergedExpenses);
+                StorageService.save(`expenses_${targetId}`, mergedExpenses);
+
+                const currentBiz = fetched.find((b: BusinessProfile) => b.id === targetId);
+                const cloudCategories = currentBiz?.expenseCategories || [];
+
+                // Merge Strategy: Keep user categories, append missing defaults
+                const mergedCats = [...cloudCategories];
+                DEFAULT_CATEGORIES.forEach(c => {
+                    if (!mergedCats.includes(c)) mergedCats.push(c);
+                });
+
+                setExpenseCategories(mergedCats);
+                StorageService.save(`expenseCategories_${targetId}`, mergedCats);
+
+                // Also refresh stats when switching/loading business
+                const stats = await ApiService.getDashboardStats(targetId);
+                setDashboardStats(stats);
+            }
+        } catch (err) {
+            console.error("Failed to load cloud data:", err);
+            // OFFLINE FALLBACK: Load from local storage if API fails
+            if (activeBusinessId) {
+                console.log("Offline mode detected. Loading cached data...");
+                const localProducts = StorageService.load(`products_${activeBusinessId}`, []);
+                const localSales = StorageService.load(`sales_${activeBusinessId}`, []);
+                const localExpenses = StorageService.load(`expenses_${activeBusinessId}`, []);
+
+                setProducts(localProducts);
+                setSales(localSales);
+                setExpenses(localExpenses);
+
+                // Recalculate stats immediately
+                calculateLocalStats(); // This function relies on CURRENT state, which isn't updated yet.
+                // Actually, the useEffect at line 118 will handle the recalculation when state changes!
+            }
+        } finally {
+            setSyncStatus('idle');
+        }
+    };
+
+    useEffect(() => {
+        loadCloudData();
+    }, [currentUser, activeBusinessId]);
+
 
     // --- Socket Connection ---
     useEffect(() => {
@@ -215,16 +392,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
             try {
                 // 1. Verify Membership (Catch "Kicked while sleeping")
                 // fetch businesses again to check if we still have access to the active one
-                const businesses = await ApiService.getBusinesses();
-                const currentBiz = businesses.find((b: any) => b.id === activeBusinessId);
+                const fetched = await ApiService.getBusinesses();
+
+                // MERGE STRATEGY REPEAT: Don't trust cloud alone, we might be local
+                const currentLocalBusinesses = StorageService.load('businesses', []);
+                const localOnly = currentLocalBusinesses.filter((b: any) => b.id.length > 30 && !fetched.some((fb: any) => fb.id === b.id));
+                const allBiz = [...fetched, ...localOnly];
+
+                const currentBiz = allBiz.find((b: any) => b.id === activeBusinessId);
 
                 if (!currentBiz) {
-                    // We lost access!
-                    showToast('Sync Alert: You are no longer a member of this business.', 'error');
-                    setActiveBusinessId(null);
-                    StorageService.save('active_business_id', '');
-                    window.location.reload();
-                    return;
+                    // Only kick if we successfully fetched from cloud (length > 0) AND still can't find it
+                    // If fetched is empty, it might be a net error (though getBusinesses usually throws on net error, returning [] implies "User has 0 businesses")
+                    // If we have 0 businesses in cloud AND 0 local, then yes, kick.
+                    if (allBiz.length > 0) {
+                        console.warn("Active business lost access.", activeBusinessId);
+                        // We lost access!
+                        showToast('Sync Alert: You are no longer a member of this business.', 'error');
+                        setActiveBusinessId(null);
+                        StorageService.save('active_business_id', '');
+                        window.location.reload();
+                        return;
+                    }
                 }
 
                 // 2. We are still a member, so catch up on missed data
@@ -264,6 +453,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
                 // Update business details too (e.g. name change)
                 setBusinesses(prev => prev.map(b => b.id === currentBiz.id ? currentBiz : b));
+
+                // --- GOOGLE SHEET AUTO-SYNC ---
+                const sheetId = activeBusinessId ? localStorage.getItem(`linked_sheet_id_${activeBusinessId}`) : null;
+                const gToken = localStorage.getItem('google_access_token');
+
+                if (sheetId && gToken) {
+                    try {
+                        const rows = await GoogleSheetsService.fetchSheetData(gToken, sheetId);
+                        const sheetProds = GoogleSheetsService.parseProducts(rows);
+
+                        if (sheetProds.length > 0) {
+                            // Merge logic similar to Products.tsx
+                            setProducts(prev => {
+                                const newProds = [...prev];
+                                sheetProds.forEach(sp => {
+                                    const idx = newProds.findIndex(p => p.name.toLowerCase() === sp.name.toLowerCase());
+                                    if (idx > -1) {
+                                        newProds[idx] = { ...newProds[idx], ...sp, stockQuantity: sp.stockQuantity };
+                                    } else {
+                                        // For new products, we need businessId. Use activeBusinessId
+                                        newProds.push({
+                                            id: `sheet_${Date.now()}_${Math.random()} `, // Temp ID until real sync
+                                            businessId: activeBusinessId,
+                                            ...sp,
+                                            totalSold: 0
+                                        } as any);
+                                    }
+                                });
+                                return newProds;
+                            });
+                            console.log("Sheet Auto-Synced on Wake");
+                        }
+                    } catch (sheetErr) {
+                        console.error("Sheet sync failed", sheetErr);
+                    }
+                }
 
             } catch (err) {
                 console.error("Wake-up sync failed:", err);
@@ -309,7 +534,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 for (const e of localData.expenses) await ApiService.addExpense({ ...e, businessId: localBusiness.id });
             } else if (choice === 'replace_cloud' && targetBusinessId) {
                 for (const p of localData.products) await ApiService.addProduct({ ...p, businessId: targetBusinessId });
-                StorageService.save(`products_${localBusiness.id}`, []);
+                StorageService.save(`products_${localBusiness.id} `, []);
             } else if (choice === 'use_cloud') {
                 StorageService.save(`products_${localBusiness.id}`, []);
                 StorageService.save(`sales_${localBusiness.id}`, []);
@@ -321,7 +546,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
             StorageService.save('businesses', remaining);
 
             setPendingConsolidation(null);
-            window.location.reload();
+
+            // Fix: Refresh data immediately instead of reloading page
+            // This ensures dashboard stats are recalculated with the new cloud data
+            if (activeBusinessId) {
+                await loadCloudData();
+            }
+            // window.location.reload(); // Removed to prevent jarring UX
         } catch (err) {
             console.error("Resolve consolidation failed:", err);
             showToast("Consolidation failed. Please try again.", 'error');
@@ -331,133 +562,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     // --- Data Initialization ---
+    // --- Data Initialization ---
     useEffect(() => {
-        if (!currentUser) {
-            // Local Mode
-            if (!activeBusinessId) {
-                const localBusinesses = StorageService.load('businesses', []);
-                if (localBusinesses.length > 0) {
-                    const firstId = localBusinesses[0].id;
-                    setActiveBusinessId(firstId);
-                    StorageService.save('active_business_id', firstId);
-                }
-                return;
+        // 1. Handle "No Active Business" in Offline Mode (Auto-select local if available)
+        if (!activeBusinessId && !currentUser) {
+            const localBusinesses = StorageService.load('businesses', []);
+            if (localBusinesses.length > 0) {
+                const firstId = localBusinesses[0].id;
+                setActiveBusinessId(firstId);
+                StorageService.save('active_business_id', firstId);
             }
-
-            setProducts(StorageService.load(`products_${activeBusinessId}`, []));
-            setSales(StorageService.load(`sales_${activeBusinessId}`, []));
-            setExpenses(StorageService.load(`expenses_${activeBusinessId}`, []));
-
-            const storedCategories = StorageService.load(`expenseCategories_${activeBusinessId}`, []);
-            const mergedCategories = [...storedCategories];
-            DEFAULT_CATEGORIES.forEach(c => {
-                if (!mergedCategories.includes(c)) mergedCategories.push(c);
-            });
-            setExpenseCategories(mergedCategories);
             return;
         }
 
-        const loadCloudData = async () => {
-            setSyncStatus('syncing');
-            try {
-                // 1. Restore Businesses
-                const fetched = await ApiService.getBusinesses();
+        if (!activeBusinessId) {
+            // If we have a user but no active business, loadCloudData will handle fetching businesses 
+            // and potentially setting one.
+            if (currentUser) loadCloudData();
+            return;
+        }
 
-                // Tag Local Ownership for Offline Access
-                let taggedBusinesses = fetched;
-                try {
-                    const user = await ApiService.getProfile();
-                    taggedBusinesses = fetched.map((b: any) => ({
-                        ...b,
-                        _isLocalOwner: b.ownerId === user.id
-                    }));
-                } catch (e) {
-                    console.warn("Failed to tag ownership", e);
-                }
+        // 2. ALWAYS Load Local Data Immediately (Stale-While-Revalidate)
+        // This ensures instant UI update on business switch or app launch, even if Online.
+        // It overwrites any stale state from previous business with correct local data for CURRENT business.
+        setProducts(StorageService.load(`products_${activeBusinessId}`, []));
+        setSales(StorageService.load(`sales_${activeBusinessId}`, []));
+        setExpenses(StorageService.load(`expenses_${activeBusinessId}`, []));
 
-                setBusinesses(taggedBusinesses);
-                StorageService.save('businesses', taggedBusinesses);
+        const storedCategories = StorageService.load(`expenseCategories_${activeBusinessId}`, []);
+        const mergedCategories = [...storedCategories];
+        DEFAULT_CATEGORIES.forEach(c => {
+            if (!mergedCategories.includes(c)) mergedCategories.push(c);
+        });
+        setExpenseCategories(mergedCategories);
 
-                let targetId = activeBusinessId;
-                const activeStillExists = fetched.some((b: BusinessProfile) => b.id === activeBusinessId);
-
-                if (!activeStillExists && fetched.length > 0) {
-                    // Mismatch Detected (Local UUID != Cloud MongoID)
-                    // Try to find by name, or fallback to first
-
-                    // Note: We need the PREVIOUS local business list to check the name if we lost reference?
-                    // But activeBusinessId is just a string.
-                    // Let's assume the user just synced, so the name should match one of the cloud businesses.
-                    // Ideally we'd have the name from local storage before it was overwritten, but we just fetched cloud.
-
-                    // Fallback 1: Just pick the first one (Safest for "Guest -> Register" flow which usually has 1 business)
-                    // Fallback 2: Check activeBusinessId against 'id' field if server returned it.
-
-                    targetId = fetched[0].id;
-                    console.log(`[DataContext] Active Business ID ${activeBusinessId} not found in cloud. Switched to ${targetId}`);
-                    setActiveBusinessId(targetId);
-                    StorageService.save('active_business_id', targetId);
-                } else if (!targetId && fetched.length > 0) {
-                    targetId = fetched[0].id;
-                    setActiveBusinessId(targetId);
-                    StorageService.save('active_business_id', targetId);
-                }
-
-                // 2. Load Data for active business
-                if (targetId) {
-                    const [prods, salesDat, exps] = await Promise.all([
-                        ApiService.getProducts(targetId),
-                        ApiService.getSales(targetId),
-                        ApiService.getExpenses(targetId)
-                    ]);
-                    // Load current local data to preserve unsynced items
-                    const localProducts = StorageService.load(`products_${targetId}`, []);
-                    const localSales = StorageService.load(`sales_${targetId}`, []);
-                    const localExpenses = StorageService.load(`expenses_${targetId}`, []);
-
-                    // Merge Strategy: Cloud is Truth for existing items. Local items strictly preserved if not in cloud.
-                    const mergeItems = (cloudItems: any[], localItems: any[]) => {
-                        const cloudIds = new Set(cloudItems.map(i => i.id));
-                        const unsyncedLocal = localItems.filter(i => !cloudIds.has(i.id));
-                        return [...cloudItems, ...unsyncedLocal];
-                    };
-
-                    const mergedProducts = mergeItems(prods, localProducts);
-                    setProducts(mergedProducts);
-                    StorageService.save(`products_${targetId}`, mergedProducts);
-
-                    const mergedSales = mergeItems(salesDat, localSales).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                    setSales(mergedSales);
-                    StorageService.save(`sales_${targetId}`, mergedSales);
-
-                    const mergedExpenses = mergeItems(exps, localExpenses).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                    setExpenses(mergedExpenses);
-                    StorageService.save(`expenses_${targetId}`, mergedExpenses);
-
-                    const currentBiz = fetched.find((b: BusinessProfile) => b.id === targetId);
-                    const cloudCategories = currentBiz?.expenseCategories || [];
-
-                    // Merge Strategy: Keep user categories, append missing defaults
-                    const mergedCats = [...cloudCategories];
-                    DEFAULT_CATEGORIES.forEach(c => {
-                        if (!mergedCats.includes(c)) mergedCats.push(c);
-                    });
-
-                    setExpenseCategories(mergedCats);
-                    StorageService.save(`expenseCategories_${targetId}`, mergedCats);
-
-                    // Also refresh stats when switching/loading business
-                    const stats = await ApiService.getDashboardStats(targetId);
-                    setDashboardStats(stats);
-                }
-            } catch (err) {
-                console.error("Failed to load cloud data:", err);
-            } finally {
-                setSyncStatus('idle');
-            }
-        };
-
-        loadCloudData();
+        // 3. Trigger Cloud Sync if Online
+        if (currentUser) {
+            loadCloudData();
+        }
     }, [currentUser, activeBusinessId]);
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
@@ -599,7 +741,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const newExpense = { ...expenseData, id, businessId: activeBusinessId || '' };
         setExpenses(prev => {
             const updated = [newExpense, ...prev];
-            StorageService.save(`expenses_${activeBusinessId}`, updated);
+            StorageService.save(`expenses_${activeBusinessId} `, updated);
             return updated;
         });
 
@@ -653,15 +795,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     const importBusiness = (newBusiness: BusinessProfile) => {
-        setBusinesses(prev => [...prev, newBusiness]);
+        setBusinesses(prev => {
+            if (prev.some(b => b.id === newBusiness.id)) {
+                // Already exists, just switch to it (or update it?)
+                // Ideally, we might want to update it, but let's just avoid duplicate push
+                return prev;
+            }
+            const updated = [...prev, newBusiness];
+            StorageService.save('businesses', updated); // Ensure we persist the import!
+            return updated;
+        });
+        // We defer switch to useEffect or just call it here, but need to be sure it exists
+        // Since setBusinesses is async, we can't switch immediately if we just added it.
+        // But preventing duplicate is key.
+        // Let's force a switch if we know it's there.
         switchBusiness(newBusiness.id);
     };
 
     const deleteBusiness = async (id: string) => {
-        setBusinesses(prev => prev.filter(b => b.id !== id));
+        setBusinesses(prev => {
+            const updated = prev.filter(b => b.id !== id);
+            StorageService.save('businesses', updated);
+            return updated;
+        });
+
         if (activeBusinessId === id) {
             setActiveBusinessId(null);
             StorageService.save('active_business_id', '');
+
+            // Clear Data Immediately to show fresh start
+            setProducts([]);
+            setSales([]);
+            setExpenses([]);
+            setDashboardStats({
+                revenue: 0,
+                expenses: 0,
+                netProfit: 0,
+                itemsSold: 0,
+                transactionCount: 0
+            });
+        }
+
+        if (currentUser) {
+            try {
+                await ApiService.deleteBusiness(id);
+                showToast("Business deleted from cloud.", "success");
+            } catch (e) {
+                console.error("Failed to delete business from cloud", e);
+                showToast("Failed to delete from cloud. It may reappear on sync.", "error");
+            }
         }
     };
 
@@ -717,7 +899,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     const syncDataNow = async () => {
-        showToast("Sync is now real-time with MongoDB!", "info");
+        if (!currentUser) {
+            // Local Mode Refresh
+            refreshDashboardStats();
+            showToast("Refreshed local data.", "success");
+            return;
+        }
+
+        try {
+            await loadCloudData();
+            showToast("Data synced from cloud.", "success");
+        } catch (error) {
+            console.error("Manual sync failed:", error);
+            showToast("Sync failed. Check connection.", "error");
+        }
     };
 
     return (

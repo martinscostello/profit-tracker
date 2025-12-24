@@ -56,6 +56,44 @@ export function Dashboard() {
             return (b.createdAt || 0) - (a.createdAt || 0);
         });
 
+    // Pull to Refresh State
+    const [pullStart, setPullStart] = useState<number | 0>(0);
+    const [pullChange, setPullChange] = useState<number | 0>(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { syncDataNow } = useData();
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.currentTarget.scrollTop === 0) {
+            setPullStart(e.touches[0].clientY);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!pullStart) return;
+        const currentY = e.touches[0].clientY;
+        const diff = currentY - pullStart;
+        if (diff > 0 && e.currentTarget.scrollTop === 0) {
+            setPullChange(diff);
+            // Prevent default only if needed, but tough with passive listeners in React
+        }
+    };
+
+    const handleTouchEnd = async () => {
+        if (pullChange > 80) { // Threshold to trigger refresh
+            setIsRefreshing(true);
+            setPullChange(60); // Snap to loading position
+            await syncDataNow();
+            setTimeout(() => {
+                setIsRefreshing(false);
+                setPullChange(0);
+                setPullStart(0);
+            }, 500);
+        } else {
+            setPullChange(0);
+            setPullStart(0);
+        }
+    };
+
     return (
         <Layout disablePadding>
             <div style={{
@@ -64,9 +102,9 @@ export function Dashboard() {
                 flexDirection: 'column',
                 padding: '1.5rem',
                 paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
-                paddingBottom: 0, // Bottom padding handled by scroll container
+                paddingBottom: 0,
                 boxSizing: 'border-box',
-                overflow: 'hidden' // Prevent body scroll
+                overflow: 'hidden'
             }}>
                 {/* Fixed Upper Section */}
                 <div style={{ flexShrink: 0, paddingBottom: '0.5rem' }}>
@@ -86,11 +124,12 @@ export function Dashboard() {
                         color: 'white',
                         borderRadius: '1.5rem',
                         padding: '1.5rem',
-                        marginBottom: '1rem', // Reduced margin since it's above scrolling area
+                        marginBottom: '1rem',
                         boxShadow: 'var(--shadow-md)',
                         position: 'relative',
                         overflow: 'hidden'
                     }}>
+                        {/* ... (Existing Profit Card Content) ... */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <div style={{
@@ -144,18 +183,43 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Scrollable Content */}
-                <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    marginRight: '-1.5rem',
-                    paddingRight: '1.5rem',
-                    marginLeft: '-1.5rem',
-                    paddingLeft: '1.5rem',
-                    paddingBottom: '6rem',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                {/* Scrollable Content with Pull to Refresh */}
+                <div
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        marginRight: '-1.5rem',
+                        paddingRight: '1.5rem',
+                        marginLeft: '-1.5rem',
+                        paddingLeft: '1.5rem',
+                        paddingBottom: '6rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative' // For refresh indicator
+                    }}
+                >
+                    {/* Refresh Indicator */}
+                    <div style={{
+                        height: pullChange > 0 ? `${Math.min(pullChange, 80)}px` : '0px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: isRefreshing ? 'height 0.2s' : 'none',
+                        width: '100%',
+                        opacity: Math.min(pullChange / 60, 1)
+                    }}>
+                        <div style={{
+                            width: '24px', height: '24px',
+                            border: '2px solid var(--color-primary)',
+                            borderTopColor: 'transparent',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                        }} />
+                    </div>
                     {useData().businesses.length === 0 ? (
                         <div style={{
                             flex: 1,
@@ -271,29 +335,7 @@ export function Dashboard() {
                                 </Card>
                             </div>
 
-                            {/* Top Products (New) */}
-                            {dashboardStats?.topProducts && dashboardStats.topProducts.length > 0 && (
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>Top Products</h2>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {dashboardStats.topProducts.map((p: any) => (
-                                            <Card key={p._id} padding="1rem" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div>
-                                                    <p style={{ fontWeight: '600' }}>{p.name}</p>
-                                                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                                        {p.totalQuantity} items sold
-                                                    </p>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <p style={{ fontWeight: 'bold', color: '#16a34a' }}>
-                                                        {formatCurrency(p.totalProfit)} profit
-                                                    </p>
-                                                </div>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+
 
                             <div style={{
                                 display: 'flex',

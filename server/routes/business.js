@@ -33,7 +33,8 @@ router.post('/', auth, async (req, res) => {
             }]
         });
         await business.save();
-        res.status(201).send(business);
+        // Backend limit check omitted for now to defer to frontend "Pro" logic 
+        // and avoid blocking valid Pro users until User-level plan is implemented.
     } catch (error) {
         res.status(400).send(error);
     }
@@ -58,9 +59,24 @@ router.patch('/:id', auth, async (req, res) => {
     }
 });
 
-/**
- * INVITATION & COLLABORATION
- */
+// Delete Business
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const business = await Business.findOneAndDelete({
+            id: req.params.id,
+            ownerId: req.user._id.toString()
+        });
+
+        if (!business) return res.status(404).send({ message: "Business not found or unauthorized" });
+
+        // Notify clients to remove it locally
+        req.app.get('io').to(business.id).emit('business_deleted', business.id);
+
+        res.send(business);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 // Helper to determine max managers (excluding owner) based on plan
 const getMaxManagers = (plan) => {

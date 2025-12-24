@@ -14,14 +14,19 @@ const BUSINESS_TYPES = [
     'Fashion/Tailoring', 'Electronics', 'Service', 'Other'
 ];
 
+import { useAuth } from '../context/AuthContext';
+// ... other imports
+
 export function AddBusiness() {
     const navigate = useNavigate();
     const { addBusiness, business, businesses } = useData();
+    const { currentUser } = useAuth();
     const { showToast } = useToast();
 
-    // Relaxed check: Allow creation if < 2 businesses (Free limit) or if User is Pro
-    const freePlanLimit = 2;
-    const canCreate = business.isPro || businesses.length < freePlanLimit;
+    // Limit check: Only count businesses OWNED by the user
+    const freePlanLimit = 2; // User can OWN up to 2 businesses
+    const ownedBusinesses = businesses.filter(b => b.ownerId === currentUser?.id);
+    const canCreate = business.isPro || ownedBusinesses.length < freePlanLimit;
 
     if (!canCreate) {
         navigate('/upgrade');

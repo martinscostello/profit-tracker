@@ -8,6 +8,7 @@ export const ApiService = {
     createBusiness: (business: Partial<BusinessProfile>) => api.post('/businesses', business).then(r => r.data),
     updateBusiness: (id: string, updates: Partial<BusinessProfile>) => api.patch(`/businesses/${id}`, updates).then(r => r.data),
     leaveBusiness: (id: string) => api.post(`/businesses/${id}/leave`).then(r => r.data),
+    deleteBusiness: (id: string) => api.delete(`/businesses/${id}`).then(r => r.data),
 
     // Products
     getProducts: (businessId: string) => api.get(`/products/${businessId}`).then(r => r.data),
