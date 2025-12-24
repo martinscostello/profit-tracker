@@ -1,0 +1,226 @@
+# Profit Tracking App - Master Project History
+
+This document consolidates task history from all development sessions.
+
+## 1. Data Integrity & Offline Fixes (Late Dec)
+*From Session: Fix Critical Data Issues*
+- [x] Investigate data isolation bug (Products/Sales/History leaking between businesses)
+    - [x] Analyze `src/services` for offline storage logic
+    - [x] Check `src/pages` for data fetching implementation
+    - [x] Verify `businessId` usage in data queries
+- [x] Investigate "ghost merge" and bad sync modal
+    - [x] Locate `setPendingConsolidation` trigger
+    - [x] Audit `loadCloudData` for implicit merges
+    - [/] Verify `SyncConflictModal` behavior in `AuthContext`
+- [x] Fix offline data separation (ensure no cross-contamination)
+    - [x] Fix `importBusiness` duplicate bug in `DataContext.tsx`
+    - [x] Update `SyncConflictModal` defaults to 'KEEP_SEPARATE'
+    - [x] Optimize `AuthContext` sync loop
+- [x] Remove 'Top Products' section from Dashboard
+    - [x] Locate and remove code in `Dashboard.tsx`
+- [x] Fix Wake-up Data Leak / Business Switch
+    - [x] `loadCloudData`: Merge local (unsynced) businesses with cloud fetch instead of overwriting
+    - [x] `checkMembershipAndSync`: Prevent auto-logout on network error/partial fetch
+- [x] Optimize App Startup Speed (Fix 60s Delay)
+    - [x] Implement lazy initialization for `products`, `sales`, `expenses` in `DataContext`
+    - [x] Implement Stale-While-Revalidate pattern: Always load local data on `activeBusinessId` change
+- [x] Implement fix for Product isolation (Verified via DataContext)
+- [x] Implement fix for Sales isolation (Verified via DataContext)
+- [x] Implement fix for History isolation (Verified via DataContext)
+
+---
+
+## 2. Sync Flow, UX & Subscription Limits (Mid Dec)
+*From Session: Sync Flow & UX Improvements*
+- [x] Improve Onboarding UX
+    - [x] Remove Login link from `Onboarding.tsx`
+    - [x] Add Login link to `BusinessSetup.tsx`
+- [x] Implement Backend Sync Logic
+    - [x] Create `POST /auth/sync` endpoint
+    - [x] Implement Business Ownership assignment (Fix "Joined" vs "Owner")
+    - [x] Implement Validation for Plan Limits
+- [x] Implement Frontend Sync Logic
+    - [x] Create `SyncConflictModal` for plan limit resolution
+    - [x] Update `AuthContext` to harvest local data
+    - [x] Update `AuthContext` to call `/sync` before finalizing login
+    - [x] Handle 409 Conflict flow
+    - [x] Handle Name Collisions in Backend (`POST /sync`)
+    - [x] Update `SyncConflictModal` to support Merge/Replace options
+    - [x] Update `AuthContext` to handle Name Collision 409
+- [x] Verification
+    - [x] Verify Login link placement
+    - [x] Verify Native Google Auth
+    - [x] Verify HTTPS/Mixed Content fix
+    - [x] Verify Smart Sync (Merge/Replace/Keep Separate)
+    - [x] Fix Business Ownership Display Bug (User ID mismatch)
+    - [x] Investigate & Fix Sync Data Loss (Critical)
+    - [x] Fix Data Access / Reset on Logout (Reverted to "Persistence" model)
+    - [x] Fix Missing Logout Button for Guest Users
+    - [x] Verify Offline Persistence on Logout
+- [ ] Fix Data & Dashboard Integrity
+    - [x] Fix "Clear Local Data" on Login (Removed clearing logic)
+    - [x] Fix "Data Revert" on Business Switch (Implemented Merge Logic)
+    - [x] Fix "Unsynced Changes" Loss (Implemented Immediate Persistence)
+    - [x] Fix Dashboard Stats Mismatch (Implement Local Calculation)
+    - [x] Verify "Sales Deleted" visual bug
+- [ ] Fix Sync Modal UI
+    - [ ] Increase Modal Z-Index (Fix Nav Bar overlap)
+    - [x] Fix Modal Scroll Layout (Sticky Footer)
+    - [x] Implement Cleanup for Unselected Businesses (Deleted from Local & Cloud)
+- [ ] Update Subscription Plan Logic
+- [x] Update Pro Lite Limit (1 Manager)
+    - [x] Update Entrepreneur Limit (5 Managers)
+    - [x] Verify Backend Enforcement
+    - [x] Verify Frontend UI Limit
+- [x] Implement Subscription Management UI
+    - [x] Update /upgrade page to handle existing subscriptions.
+    - [x] Add "Cancel Plan" optionality.
+    - [x] Add "Change Plan" optionality.
+- [x] Fix Join Flow & QR Scanning
+    - [x] Debug Join 400 Error (Invalid Code/Validation)
+    - [x] Fix QR Camera Permission Handling
+- [x] Fix Missing Managers in UI
+    - [x] Locate Manager List Component
+- [x] Fix Real-time Sync & Data Integrity
+    - [x] Fix Duplicate Sales (Optimistic + Socket Collision)
+    - [x] Fix Sales Not Syncing to Owner (Resolved via Listener Fix)
+    - [x] Fix Permission Updates NotApplying (Resolved via Listener Fix)
+    - [x] Fix Manager Removal Not Revoking Access (Added "Kick" Logic)
+- [x] Fix Dormant Sync for Owner (Manager List)
+    - [x] Verify GET /businesses populates collaborators
+    - [x] Ensure wake-up sync updates business details
+- [x] Fix Critical Server/Client Bugs
+    - [x] **Offline Loading**: App now loads locally if server is unreachable (cached profile).
+    - [x] **Dashboard Stats**: Fixed stale data by forcing refresh after consolidation.
+    - [x] **Cross-Network**: Verified Google Login and Backend connectivity on Local Network (req. Firewall Rule).
+    - [x] **Socket Stability**: Confirmed re-sync logic handles disconnects.
+    - [x] **UI Cleanup**: Removed Debug Console, Guest Login, and Server Config from Login Page.
+    - [x] **Google Auth**: Verified native Google Sign-In works perfectly.
+    - [x] **Logout Fix**: Fixed `user_profile` caching bug to ensure proper logout.
+- [x] Fix Dormant/Sleep State Sync Issues
+    - [x] Implement Wake-up Reconciliation (Fetch latest data on app resume)
+    - [x] Handle Missed Socket Events (Verify membership on reconnect)
+    - [x] Improve Socket Reconnection Logic
+- [ ] Fix Expense Categories
+    - [x] Debug Persistence (Added StorageService.save)
+    - [x] Verify UI State Updates
+    - [x] Restore Default Categories (Merge Defaults logic - User items preserved, defaults appended)
+- [x] Update Settings UI for Subscription Management
+    - [x] Change "Upgrade to Pro" to "Manage Plans" if subscribed
+    - [x] Verify Upgrade Page UI visibility
+- [x] Fix Offline & Data Safety Conflicts
+    - [x] **Dashboard Offline**: Verified `Dashboard.tsx` relies on `useData` (LocalStorage backed), ensuring seamless offline access.
+    - [x] **Access Lock Trigger**: Fixed "infinite loop" bug in `Login.tsx`. "Log in" button now works.
+    - [x] **Local Persistence**: Audited `DataContext`. mutations (`addSale`, etc.) save to Storage immediately.
+    - [x] **Owner Offline Access**: Verified `_isLocalOwner` tag is persisted to allow Owners access even when offline.
+- [ ] Google Sheets Sync (Feasibility & Implementation)
+    - [x] **Feasibility**: Confirm Scope injection (`spreadsheets.readonly`) works with Capacitor.
+    - [x] **Prototype**: Implement "Import" button -> Sheet Picker.
+    - [x] **Import Logic**: Restore "Local Backup" import in new Modal.
+    - [x] **Auto-Sync Logic**: Implement "Diff & Update" logic on app load.
+
+---
+
+## 3. Core Development & Backend Migration (Early Dec)
+*From Session: Core Architecture, Firebase -> Mongo Migration*
+
+- [x] Project Setup
+- [x] Core Architecture
+- [x] UI Implementation
+    - [x] **Navigation & Layout**
+    - [x] **Onboarding Flow**
+    - [x] **Dashboard**
+    - [x] **Functional Screens** (Products, Add Sale, History, Settings)
+- [x] **Business Setup**
+    - [x] Create Screen
+    - [x] Change Currency to Dropdown
+    - [x] Change Category to Dropdown
+- [x] PIN Refactor and Security Enhancements
+    - [x] Refactor PIN Management to dedicated Settings page
+    - [x] Implement "Partner Access" (canEditCompanyProfile)
+    - [x] Secure Edit Sale with PIN
+    - [x] Implement individual Sale Deletion
+    - [x] Fix `clearSales` date logic
+    - [x] Integrate Settings Reset
+    - [x] **Secure Product Edit** (Intercept Edit Click)
+- [x] Backend Migration: Firebase to MongoDB
+    - [x] Setup Node.js/Express Server with MongoDB (Mongoose)
+    - [x] Implement JWT Authentication (Register/Login/Guest)
+    - [x] Implement CRUD API Endpoints (Products, Sales, Expenses, Businesses)
+    - [x] Integrate Socket.io for Real-time Sync
+    - [x] Refactor Frontend (AuthContext, DataContext, ApiService) to support MongoDB
+- [x] Post-Migration Phase 1: Data & Auth
+    - [x] Create Data Migration Script (Firestore to MongoDB)
+    - [x] Integrate Google OAuth with Node.js Backend
+- [/] Post-Migration Phase 2: Analytics & Polish
+    - [x] Implement Advanced Reporting (MongoDB Aggregations)
+    - [x] **Refine PinModal UI** (Compact Text)
+    - [x] **Fix Security Bypass** (Route Protection)
+- [x] **Inventory System**
+    - [x] **Type Updates** (stock, totalSold)
+    - [x] **Context Logic** (Deduct stock on sale, Handle Edit)
+    - [x] **Add/Edit Product UI** (Stock Input)
+    - [x] **Product Card UI** (Show Sold/Available)
+- [x] **UI Polish**
+    - [x] **Status Indicator** (Breathing Green/Grey)
+    - [x] **Enhanced Animation** (Stronger Pulse)
+    - [x] **Delete Button Style** (Red, Full Size)
+    - [x] **Status Bar Fix** (Blended White with Dark Text)
+- [x] **Product Import**
+    - [x] Implement Import Logic in `Products.tsx`
+    - [x] **Fix Import Mapping** (Normalize Headers & Values)
+    - [x] **Handle Duplicates** (Update existing products)
+- [x] **Sales**
+    - [x] **Editable Selling Price** (Negotiation support)
+    - [x] **Formatted Price Input** (Continuous formatting)
+- [x] **Products**
+    - [x] Add/Edit Page
+    - [x] Fix Save Button
+    - [x] Fix Android UUID Crash
+- [x] **Android Deployment**
+    - [x] Install Capacitor
+    - [x] Setup Live Reload
+    - [x] Handle Back Button
+    - [x] Fix Safe Area Insets
+    - [x] Troubleshoot Sync Issue
+- [x] **Settings Overhaul**
+    - [x] **Currency Switcher** (Main Menu)
+    - [x] **Backup System** (Local DL, Cloud Stub)
+    - [x] **Pro Modal** (Gold Border, Money Animation)
+    - [x] **Guide & FAQ** (How it works page)
+- [x] **UI Polish Phase 2**
+    - [x] Remove Tap Highlight (Blue flash)
+    - [x] Onboarding Slide Animations
+- [x] **Sync Currency Selection**
+- [x] **Keyboard UX Improvements**
+- [x] **Expenses Feature**
+    - [x] Create `Expenses` Page
+    - [x] Update Reports for Net Profit
+- [x] **Tax Calculator**
+    - [x] Create `TaxCalculator` Page
+- [x] **Bug Fixes**
+    - [x] **Fix Nav Bar Alignment**
+    - [x] **Fix Dashboard Text Overlap**
+    - [x] **Fix UI Scaling & Clipping**
+- [x] **Company Profile Feature**
+    - [x] Create `CompanyProfile` Page
+    - [x] Implement Edit Logic (Name/Type)
+- [x] **Branding**
+    - [x] Rename to "DailyProfit"
+    - [x] **Logo Design Iteration 6** (Approved: Breakout Graph)
+    - [x] Sync Native Assets
+- [x] **Expenses Overhaul**
+    - [x] **Data Logic**: Update `getTodayStats` (Net Profit)
+    - [x] **Dashboard**: Redesign Main Card, Add "See All"
+    - [x] **Navigation**: Swap "History" for "Expenses", Upgrade FAB
+- [x] **PIN UX Optimization**
+    - [x] Auto-verify correct PIN on 4th digit
+- [x] **Keypad Behavior Optimization**
+- [x] **Refactor Settings**
+    - [x] Implement Category Management (Add/Remove)
+- [x] **Notification System** (Reminders, Low Stock, Alerts)
+- [x] **Multi-Business** (Add Business, Profile v2, Delete)
+- [x] **Multi-User Collaboration** (Invites, Roles, Permissions, Socket Sync)
+- [x] **Debugging: Blank Screen Fix** (App Shell, Data Layer, Auth Layer)
+- [x] **Pro Plan & Permissions** (Tiers, Enforcement, Limits)
+- [x] **Bug Fixes**: Manager Removal, QR Scanner, Dashboard Refactor
