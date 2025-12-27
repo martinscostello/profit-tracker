@@ -17,7 +17,7 @@ interface SettingItem {
     icon: any;
     label: string;
     sub?: string;
-    value?: string;
+    value?: string | React.ReactNode;
     color?: string;
     iconColor?: string;
     action?: boolean;
@@ -58,6 +58,17 @@ export function Settings() {
 
     // ... (rest of state)
 
+    const getPlanDetails = () => {
+        if (!business.isPro) return { label: 'Free Plan', color: '#3b82f6' }; // Blue
+        switch (business.plan) {
+            case 'LITE': return { label: 'Lite Plan', color: '#16a34a' }; // Green
+            case 'ENTREPRENEUR': return { label: 'Entrepreneur', color: '#9333ea' }; // Purple
+            case 'UNLIMITED': return { label: 'Unlimited', color: '#eab308' }; // Gold
+            default: return { label: 'Pro Plan', color: '#9333ea' };
+        }
+    };
+    const planDetails = getPlanDetails();
+
     const sections: { title: string; items: SettingItem[] }[] = [
         {
             title: 'Account',
@@ -65,9 +76,9 @@ export function Settings() {
                 {
                     icon: Crown,
                     label: 'Subscription Status',
-                    value: business.isPro ? 'Pro Plan' : 'Free Plan',
-                    color: business.isPro ? '#9333ea' : 'var(--color-text-muted)',
-                    iconColor: '#9333ea'
+                    value: planDetails.label,
+                    color: planDetails.color,
+                    iconColor: planDetails.color
                 },
                 {
                     icon: User,
@@ -129,10 +140,19 @@ export function Settings() {
             items: [
                 {
                     icon: Calculator,
-                    label: 'Tax Calculator',
+                    label: 'Tax Insight ⭐️',
+                    sub: 'New 2026 Law Estimates',
                     iconColor: '#F97316', // Orange
                     action: true,
-                    onClick: () => navigate('/settings/tax-calculator')
+                    value: !business.isPro ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <Lock size={16} color="#eab308" fill="#eab308" />
+                        </div>
+                    ) : undefined,
+                    onClick: () => {
+                        if (business.isPro) navigate('/tax-insight');
+                        else setIsUpgradeOpen(true);
+                    }
                 },
                 can('canManageSettings') && {
                     icon: Receipt,
@@ -165,7 +185,12 @@ export function Settings() {
                     action: true,
                     onClick: () => navigate('/settings/guide')
                 },
-                { icon: FileText, label: 'Contact Support', action: true }
+                {
+                    icon: FileText,
+                    label: 'Contact Support',
+                    action: true,
+                    onClick: () => navigate('/settings/contact')
+                }
             ]
         },
         // Developer option - Only for Owners/Devs really, keep for testing but maybe restrict too?
@@ -199,7 +224,7 @@ export function Settings() {
                     top: 0,
                     backgroundColor: 'var(--color-bg)',
                     zIndex: 20,
-                    paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+                    paddingTop: 'calc(3rem + env(safe-area-inset-top))',
                     paddingBottom: '1rem',
                     paddingLeft: '1.5rem',
                     paddingRight: '1.5rem',

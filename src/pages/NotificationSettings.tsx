@@ -7,6 +7,7 @@ import { ArrowLeft, Bell } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { NotificationService } from '../services/NotificationService';
 import { StorageService } from '../services/StorageService';
+import { SALE_REMINDERS, EXPENSE_REMINDERS } from '../utils/notificationMessages';
 
 export function NotificationSettings() {
     const navigate = useNavigate();
@@ -16,8 +17,17 @@ export function NotificationSettings() {
     // Settings State
     const [enabled, setEnabled] = useState(true);
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [toneType, setToneType] = useState<'default' | 'custom'>('default');
-    const [customTone, setCustomTone] = useState<string>('');
+    const [selectedTone, setSelectedTone] = useState<{ id: string, name: string }>({ id: 'default', name: 'System Default' });
+    const [showTonePicker, setShowTonePicker] = useState(false);
+
+    const TONES = [
+        { id: 'default', name: 'System Default' },
+        { id: 'silent', name: 'Silent' },
+        { id: 'cash', name: 'Cash Register 💰' },
+        { id: 'chime', name: 'Success Chime ✨' },
+        { id: 'alert', name: 'Gentle Alert 🔔' },
+        { id: 'spaceship', name: 'Spaceship 🚀' },
+    ];
 
     // Reminders
     const [saleReminder, setSaleReminder] = useState({
@@ -46,8 +56,7 @@ export function NotificationSettings() {
             if (stored) {
                 setEnabled(stored.enabled);
                 setSoundEnabled(stored.soundEnabled);
-                setToneType(stored.toneType || 'default');
-                setCustomTone(stored.customTone || '');
+                if (stored.selectedTone) setSelectedTone(stored.selectedTone);
                 setSaleReminder(stored.saleReminder);
                 setExpenseReminder(stored.expenseReminder);
                 setLowStockAlert(stored.lowStockAlert);
@@ -63,7 +72,7 @@ export function NotificationSettings() {
         try {
             // Save to Storage
             const settings = {
-                enabled, soundEnabled, toneType, customTone, saleReminder, expenseReminder,
+                enabled, soundEnabled, selectedTone, saleReminder, expenseReminder,
                 lowStockAlert, outOfStockAlert, highExpenseAlert
             };
             StorageService.save('notification_settings', settings);
@@ -80,36 +89,55 @@ export function NotificationSettings() {
 
             // 1. Sale Reminders
             if (saleReminder.enabled) {
-                const startHour = parseInt(saleReminder.startTime.split(':')[0]);
-                const endHour = parseInt(saleReminder.endTime.split(':')[0]);
-                const intervalHours = Math.floor(saleReminder.interval / 60) || 1;
+                const [sH, sM] = saleReminder.startTime.split(':').map(Number);
+                const [eH, eM] = saleReminder.endTime.split(':').map(Number);
+                const startMins = sH * 60 + sM;
+                const endMins = eH * 60 + eM;
 
                 let idCounter = 1000;
-                for (let h = startHour; h < endHour; h += intervalHours) {
+                const interval = saleReminder.interval > 0 ? saleReminder.interval : 60;
+
+                for (let m = startMins; m < endMins; m += interval) {
+                    const hour = Math.floor(m / 60);
+                    const minute = m % 60;
+
+                    // Pick Random Message
+                    const msg = SALE_REMINDERS[Math.floor(Math.random() * SALE_REMINDERS.length)];
+
                     notificationsToSchedule.push({
                         id: idCounter++,
                         title: 'Track Your Sales 📈',
-                        body: 'Have you recorded your recent sales today?',
-                        schedule: { on: { hour: h, minute: 0 }, allowWhileIdle: true },
-                        sound: soundEnabled ? (toneType === 'custom' && customTone ? customTone : undefined) : undefined
+                        body: msg,
+                        schedule: { on: { hour, minute }, allowWhileIdle: true },
+                        channelId: soundEnabled && selectedTone.id !== 'silent' && selectedTone.id !== 'default' ? selectedTone.id : 'default'
                     });
                 }
             }
 
             // 2. Expense Reminders
             if (expenseReminder.enabled) {
-                const startHour = parseInt(expenseReminder.startTime.split(':')[0]);
-                const endHour = parseInt(expenseReminder.endTime.split(':')[0]);
-                const intervalHours = Math.floor(expenseReminder.interval / 60) || 1;
+                const [sH, sM] = expenseReminder.startTime.split(':').map(Number);
+                const [eH, eM] = expenseReminder.endTime.split(':').map(Number);
+                const startMins = sH * 60 + sM;
+                const endMins = eH * 60 + eM;
 
-                let idCounter = 1100;
-                for (let h = startHour; h < endHour; h += intervalHours) {
+                let idCounter = 2000; // New range for expenses
+                const interval = expenseReminder.interval > 0 ? expenseReminder.interval : 120;
+
+                // Offset expenses by 5 mins if colliding? Random variation? 
+                // Let's just follow the schedule.
+                for (let m = startMins; m < endMins; m += interval) {
+                    const hour = Math.floor(m / 60);
+                    const minute = m % 60;
+
+                    const msg = EXPENSE_REMINDERS[Math.floor(Math.random() * EXPENSE_REMINDERS.length)];
+
                     notificationsToSchedule.push({
                         id: idCounter++,
                         title: 'Track Expenses 📝',
-                        body: 'Don\'t forget to log any business expenses.',
-                        schedule: { on: { hour: h, minute: 30 }, allowWhileIdle: true }, // Offset by 30 mins to avoid clash
-                        sound: soundEnabled ? (toneType === 'custom' && customTone ? customTone : undefined) : undefined
+                        body: msg,
+                        schedule: { on: { hour, minute }, allowWhileIdle: true },
+                        channelId: soundEnabled && selectedTone.id !== 'silent' && selectedTone.id !== 'default' ? selectedTone.id : 'default'
                     });
                 }
             }
@@ -151,7 +179,7 @@ export function NotificationSettings() {
         <Layout showNav={false}>
             <div style={{
                 position: 'sticky', top: 0, backgroundColor: 'var(--color-bg)', zIndex: 20,
-                paddingTop: 'calc(1.5rem + env(safe-area-inset-top))', paddingBottom: '1rem',
+                paddingTop: 'calc(3rem + env(safe-area-inset-top))', paddingBottom: '1rem',
                 paddingLeft: '1.5rem', paddingRight: '1.5rem', borderBottom: '1px solid var(--color-border)',
                 display: 'flex', alignItems: 'center', gap: '1rem'
             }}>
@@ -251,7 +279,7 @@ export function NotificationSettings() {
                                         <div>
                                             <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Frequency</label>
                                             <select
-                                                value={[60, 120, 180].includes(expenseReminder.interval) ? expenseReminder.interval : 'custom'}
+                                                value={[10, 60, 120, 180].includes(expenseReminder.interval) ? expenseReminder.interval : 'custom'}
                                                 onChange={e => {
                                                     const val = e.target.value;
                                                     if (val === 'custom') {
@@ -262,13 +290,14 @@ export function NotificationSettings() {
                                                 }}
                                                 style={{ width: '100%', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--color-border)', marginTop: '0.25rem' }}
                                             >
+                                                <option value={10}>Every 10 mins (Intense)</option>
                                                 <option value={60}>Every Hour</option>
                                                 <option value={120}>Every 2 Hours</option>
                                                 <option value={180}>Every 3 Hours</option>
                                                 <option value="custom">Custom (Timer)</option>
                                             </select>
                                             {/* Custom Input */}
-                                            {![60, 120, 180].includes(expenseReminder.interval) && (
+                                            {![10, 60, 120, 180].includes(expenseReminder.interval) && (
                                                 <div style={{ marginTop: '0.5rem' }}>
                                                     <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Every (minutes)</label>
                                                     <input
@@ -342,49 +371,23 @@ export function NotificationSettings() {
 
                                     {soundEnabled && (
                                         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-                                            <p style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.75rem' }}>Tone Preference</p>
-                                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="toneType"
-                                                        checked={toneType === 'default'}
-                                                        onChange={() => setToneType('default')}
-                                                        style={{ accentColor: 'var(--color-primary)' }}
-                                                    />
-                                                    System Default
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="toneType"
-                                                        checked={toneType === 'custom'}
-                                                        onChange={() => setToneType('custom')}
-                                                        style={{ accentColor: 'var(--color-primary)' }}
-                                                    />
-                                                    Custom Media
-                                                </label>
-                                            </div>
-
-                                            {toneType === 'custom' && (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Select Audio File</label>
-                                                    <input
-                                                        type="file"
-                                                        accept="audio/*"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setCustomTone(file.name);
-                                                            }
-                                                        }}
-                                                        style={{ fontSize: '0.875rem' }}
-                                                    />
-                                                    {customTone && (
-                                                        <p style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>Selected: {customTone}</p>
-                                                    )}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <p style={{ fontWeight: '500', fontSize: '0.875rem' }}>Tone Preference</p>
+                                                    <p style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: '0.25rem' }}>
+                                                        {selectedTone.name}
+                                                    </p>
                                                 </div>
-                                            )}
+                                                <button
+                                                    onClick={() => setShowTonePicker(true)}
+                                                    style={{
+                                                        color: 'var(--color-primary)', fontSize: '0.875rem', fontWeight: '500',
+                                                        padding: '0.5rem 1rem', backgroundColor: '#eff6ff', borderRadius: '0.5rem'
+                                                    }}
+                                                >
+                                                    Tap to change
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -397,6 +400,69 @@ export function NotificationSettings() {
                     </div>
                 )}
             </div>
+
+            {/* Tone Picker Modal */}
+            {showTonePicker && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 100,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
+                }} onClick={() => setShowTonePicker(false)}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
+                        padding: '1.5rem', paddingBottom: '3rem',
+                        animation: 'slide-up 0.3s ease-out'
+                    }} onClick={e => e.stopPropagation()}>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Select Tone</h3>
+                            <button onClick={() => setShowTonePicker(false)} style={{ padding: '0.5rem 1rem', backgroundColor: '#2563eb', color: 'white', borderRadius: '0.5rem', fontWeight: '600' }}>Done</button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {TONES.map(tone => (
+                                <button
+                                    key={tone.id}
+                                    onClick={() => {
+                                        setSelectedTone(tone);
+                                        // Play preview
+                                        if (tone.id !== 'default' && tone.id !== 'silent') {
+                                            new Audio(`/assets/sounds/${tone.id}.wav`).play().catch(e => console.log('Audio play failed', e));
+                                        }
+                                    }}
+                                    style={{
+                                        padding: '1rem',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        borderBottom: '1px solid #f1f5f9',
+                                        backgroundColor: selectedTone.id === tone.id ? '#f0fdf4' : 'white',
+                                        color: selectedTone.id === tone.id ? '#166534' : 'inherit',
+                                        borderRadius: '0.75rem',
+                                        marginBottom: '0.5rem',
+                                        textAlign: 'left',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        {/* Simple icon based on type */}
+                                        {tone.id === 'silent' ? <span>🔕</span> : tone.id === 'default' ? <span>📱</span> : <span>🔊</span>}
+                                        <span style={{ fontWeight: selectedTone.id === tone.id ? '600' : '400' }}>{tone.name}</span>
+                                    </div>
+                                    {selectedTone.id === tone.id && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#16a34a' }}>Active</span>
+                                            <span>✓</span>
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem' }}>
+                                Tap to select & preview.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }

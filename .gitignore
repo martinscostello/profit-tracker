@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 server/scripts/serviceAccountKey.json
 server/scripts/profit-tracking-app-56efb-firebase-adminsdk-fbsvc-a7f678230b.json
+server/mongodb

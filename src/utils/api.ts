@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Capacitor } from '@capacitor/core';
 
 const getBaseUrl = () => {
     // 1. Manual Override (For mobile testing)
@@ -9,14 +10,25 @@ const getBaseUrl = () => {
     const envUrl = import.meta.env.VITE_API_URL;
     if (envUrl) return envUrl;
 
-    const hostname = window.location.hostname;
-    // For local web development or when Capacitor defaults to localhost
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:5000/api';
+    // 3. Platform Specific Defaults
+    if (Capacitor.getPlatform() === 'android') {
+        // Standard Android Emulator Loopback
+        return 'http://10.0.2.2:3001/api';
     }
 
-    // Fallback for LAN testing
-    return `${window.location.protocol}//${hostname}:5000/api`;
+    if (Capacitor.getPlatform() === 'ios') {
+        // Standard iOS Simulator Loopback
+        return 'http://localhost:3001/api';
+    }
+
+    // 4. Web / Fallback
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:3001/api';
+    }
+
+    // LAN / Production Fallback
+    return `${window.location.protocol}//${hostname}:3001/api`;
 };
 
 
@@ -28,7 +40,7 @@ const api = axios.create({
 });
 
 // Add token to requests
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: any) => {
     const token = localStorage.getItem('auth_token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;

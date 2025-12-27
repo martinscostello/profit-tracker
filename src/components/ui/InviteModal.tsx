@@ -38,7 +38,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                 setTimeout(() => reject(new Error("Request timed out - Check internet connection")), 5000)
             );
 
-            const codePromise = ApiService.createInvitation(business.id).then(res => res.code);
+            const codePromise = ApiService.createInvitation(business.id).then((res: any) => res.code);
 
             // Race the actual request against the timeout
             const code = await Promise.race([codePromise, timeoutPromise]) as string;

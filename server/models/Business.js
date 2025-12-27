@@ -36,7 +36,11 @@ const businessSchema = new mongoose.Schema({
     collaborators: [collaboratorSchema],
     expenseCategories: [String],
     inviteCode: { type: String, index: true },
-    inviteExpiry: Date
+    inviteExpiry: Date,
+    taxSettings: {
+        businessType: { type: String, enum: ['SOLO', 'REGISTERED', 'LIMITED'], default: 'SOLO' },
+        hasExemptItems: { type: String, enum: ['YES', 'NO', 'IDK'], default: 'IDK' }
+    }
 }, { timestamps: true });
 
 export const Business = mongoose.model('Business', businessSchema);

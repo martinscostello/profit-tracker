@@ -46,7 +46,7 @@ export function TransactionPin() {
         <Layout disablePadding>
             <div style={{
                 height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                paddingTop: 'calc(env(safe-area-inset-top))'
+                paddingTop: 'calc(0.5rem + env(safe-area-inset-top))'
             }}>
                 <div style={{ padding: '1.5rem', backgroundColor: 'var(--color-bg)', zIndex: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>

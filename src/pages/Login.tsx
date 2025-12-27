@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 
+
 export function Login() {
     const { googleLogin, currentUser } = useAuth();
     const { showToast } = useToast();
@@ -63,6 +64,7 @@ export function Login() {
 
     const handleNativeGoogleLogin = async () => {
         try {
+            await GoogleAuth.signOut(); // FORCE: Clear cached session to get fresh token
             const user = await GoogleAuth.signIn();
             if (user.authentication.idToken) {
                 await googleLogin(user.authentication.idToken, user.authentication.accessToken);
@@ -80,6 +82,8 @@ export function Login() {
     };
 
     // Server Config Handlers Removed (Cleanup)
+
+
 
     if (currentUser) {
         return null;
@@ -197,6 +201,7 @@ export function Login() {
                             </div>
                         )}
                     </div>
+
                 </div>
             </div>
         </Layout>

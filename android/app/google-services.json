@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "104181077468",
+    "project_id": "profit-tracking-app-56efb",
+    "storage_bucket": "profit-tracking-app-56efb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104181077468:android:d16d7e1af8fed5dfb72b19",
+        "android_client_info": {
+          "package_name": "com.profittracker.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "104181077468-8h9rchio3rrnvuc4cb6oj9cv1re7bvp6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.profittracker.app",
+            "certificate_hash": "d4f059f1d799c64094ff0530f4c1c59ad9137fa6"
+          }
+        },
+        {
+          "client_id": "104181077468-lemhostdlkt6pc4om5fr1o77tvhqebup.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9zfGJLxOxfXwXec_M01hDHW6qOZDvTCw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "104181077468-lemhostdlkt6pc4om5fr1o77tvhqebup.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

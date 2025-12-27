@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: profit-tracker-api
+    env: node
+    rootDirectory: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false

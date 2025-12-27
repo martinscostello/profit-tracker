@@ -107,7 +107,7 @@ export function CompanyProfile() {
                 height: '100vh',
                 display: 'flex', flexDirection: 'column',
                 overflow: 'hidden',
-                paddingTop: 'calc(env(safe-area-inset-top))'
+                paddingTop: 'calc(0.5rem + env(safe-area-inset-top))'
             }}>
                 {/* Fixed Header */}
                 <div style={{

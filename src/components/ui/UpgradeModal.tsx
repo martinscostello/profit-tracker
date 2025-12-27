@@ -105,8 +105,9 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                             <div style={{ textAlign: 'left', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem' }}>
                                 <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#334155' }}>DailyProfit Pro shows:</p>
                                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: '#475569' }}>
+                                    <li style={{ color: '#16a34a', fontWeight: '600' }}>✨ Tax Insight & Estimates</li>
                                     <li>• What you make daily</li>
-                                    <li>• Where your money goes</li>
+                                    <li>• Full Profit History</li>
                                     <li>• How to plan better</li>
                                 </ul>
                             </div>
@@ -115,15 +116,15 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     ) : (
                         <div style={{ marginBottom: '2rem' }}>
                             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '1rem', lineHeight: '1.4' }}>
-                                Know Your Real Profit — Every Day
+                                Unlock Tax Insight & Full History
                             </h2>
                             <div style={{ textAlign: 'left', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem' }}>
                                 <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#334155' }}>DailyProfit Pro helps you:</p>
                                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: '#475569' }}>
+                                    <li style={{ color: '#16a34a', fontWeight: '600' }}>🔐 Automatic Tax Estimates</li>
                                     <li>• See your full profit history</li>
-                                    <li>• Track expenses properly</li>
-                                    <li>• Know what your business truly makes</li>
-                                    <li>• Never lose your data</li>
+                                    <li>• Track expenses & exemptions</li>
+                                    <li>• Manage multiple businesses</li>
                                 </ul>
                             </div>
                             <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#94a3b8' }}>Upgrade when you’re ready.</p>

@@ -31,7 +31,7 @@ export function BackupSettings() {
         <Layout showNav={false}>
             <div style={{
                 padding: '1.5rem',
-                paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+                paddingTop: 'calc(3rem + env(safe-area-inset-top))',
                 minHeight: '100vh',
                 display: 'flex',
                 flexDirection: 'column'

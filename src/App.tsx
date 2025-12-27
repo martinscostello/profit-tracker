@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { Collaborators } from './pages/Collaborators';
 import { JoinBusiness } from './pages/JoinBusiness';
 
@@ -18,8 +19,10 @@ import { SalesHistory } from './pages/History';
 import { Settings } from './pages/Settings';
 import { BackupSettings } from './pages/BackupSettings';
 import { HowItWorks } from './pages/HowItWorks';
+import { ContactPage } from './pages/ContactPage';
 import { Expenses } from './pages/Expenses';
 import { TaxCalculator } from './pages/TaxCalculator';
+import { TaxInsight } from './pages/TaxInsight';
 import { CompanyProfile } from './pages/CompanyProfile';
 import { TransactionPin } from './pages/TransactionPin';
 import { DataConsolidationModal } from './components/ui/DataConsolidationModal';
@@ -28,6 +31,7 @@ import { Notifications } from './pages/Notifications';
 import { NotificationSettings } from './pages/NotificationSettings';
 import { ExpenseAdvice } from './pages/ExpenseAdvice';
 import { AddBusiness } from './pages/AddBusiness';
+import { CustomSale } from './pages/CustomSale';
 import { UpgradePage } from './pages/UpgradePage';
 
 import { Login } from './pages/Login';
@@ -42,6 +46,25 @@ function AppRoutes() {
   const [showSetup, setShowSetup] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // Handle Notification Deep Links
+    let listener: any;
+    const setupListener = async () => {
+      listener = await LocalNotifications.addListener('localNotificationActionPerformed', (payload) => {
+        const link = payload.notification.extra?.link;
+        if (link) {
+          console.log('Navigating to from notification:', link);
+          navigate(link);
+        }
+      });
+    };
+    setupListener();
+
+    return () => {
+      if (listener) listener.remove();
+    };
+  }, [navigate]);
 
   useEffect(() => {
     // Configure Status Bar
@@ -108,12 +131,15 @@ function AppRoutes() {
         <Route path="/settings/backup" element={<BackupSettings />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/settings/tax-calculator" element={<TaxCalculator />} />
+        <Route path="/tax-insight" element={<TaxInsight />} />
         <Route path="/settings/company-profile" element={<CompanyProfile />} />
         <Route path="/settings/transaction-pin" element={<TransactionPin />} />
         <Route path="/settings/expense-categories" element={<ExpenseCategories />} />
         <Route path="/settings/guide" element={<HowItWorks />} />
+        <Route path="/settings/contact" element={<ContactPage />} />
         <Route path="/collaborators" element={<Collaborators />} />
         <Route path="/join-business" element={<JoinBusiness />} />
+        <Route path="/custom-sale" element={<CustomSale />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <DataConsolidationModal />

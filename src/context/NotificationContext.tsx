@@ -40,8 +40,46 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Track alerted products to prevent spam on every render
     const [alertedProducts, setAlertedProducts] = useState<Set<string>>(new Set());
 
+    const pushNotification = async (title: string, body: string, type: AppNotification['type'] = 'info', link?: string) => {
+        const newNotif: AppNotification = {
+            id: Date.now().toString(),
+            title,
+            body,
+            date: new Date().toISOString(),
+            read: false,
+            type,
+            actionLink: link
+        };
+        setNotifications(prev => [newNotif, ...prev]);
+
+        // Get settings for sound preference
+        const settings = StorageService.load('notification_settings', null);
+        let channelId = 'default';
+
+        if (settings?.soundEnabled && settings?.selectedTone?.id !== 'silent') {
+            if (settings.selectedTone.id !== 'default') {
+                channelId = settings.selectedTone.id; // 'cash', 'chime', 'alert'
+            }
+        }
+
+        // Also trigger system notification if allowed
+        await NotificationService.schedule({
+            notifications: [{
+                id: Math.floor(Math.random() * 100000),
+                title,
+                body,
+                extra: { link },
+                schedule: { at: new Date(Date.now() + 100) }, // Immediate
+                channelId: channelId
+            }]
+        });
+    };
+
     // Immediate Check on Product Updates
     useEffect(() => {
+        // Initialize Channels (Android)
+        NotificationService.createChannels();
+
         const checkBusinessHealth = async () => {
             const currentAlerted = new Set(alertedProducts);
             let hasNewAlerts = false;
@@ -64,9 +102,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // 2. Check Low Stock (<= 5)
             const lowStock = products.filter(p => (p.stockQuantity || 0) <= 5 && (p.stockQuantity || 0) > 0);
             lowStock.forEach(p => {
-                // Only alert once per session/day or if not alerted yet
-                // For simplified immediate logic, we track ID.
-                // Resetting this state on app restart is fine for now.
                 if (!currentAlerted.has(`low_${p.id}`)) {
                     pushNotification(
                         'Low Stock Warning 📉',
@@ -79,7 +114,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 }
             });
 
-            // 3. High Expense Logic (Keep usage of today's date for dedupe)
+            // 3. High Expense Logic
             const stats = getTodayStats();
             if (stats.grossProfit > 0 && stats.expenses > (stats.grossProfit * 0.8)) {
                 const today = new Date().toISOString().split('T')[0];
@@ -107,29 +142,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, [products, notifications.length]); // Dependencies managed carefully
 
 
-    const pushNotification = async (title: string, body: string, type: AppNotification['type'] = 'info', link?: string) => {
-        const newNotif: AppNotification = {
-            id: Date.now().toString(),
-            title,
-            body,
-            date: new Date().toISOString(),
-            read: false,
-            type,
-            actionLink: link
-        };
-        setNotifications(prev => [newNotif, ...prev]);
-
-        // Also trigger system notification if allowed
-        await NotificationService.schedule({
-            notifications: [{
-                id: Math.floor(Math.random() * 100000),
-                title,
-                body,
-                schedule: { at: new Date(Date.now() + 100) } // Immediate
-            }]
-        });
-    };
-
     const markAsRead = (id: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     };
@@ -144,7 +156,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const scheduleReminders = async (settings: any) => {
         // To be implemented with NotificationSettings page
-        // settings will contain: saleReminderInterval, expenseReminderInterval, stockCheck, etc.
         console.log('Scheduling reminders...', settings);
     };
 

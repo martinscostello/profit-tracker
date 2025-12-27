@@ -51,7 +51,7 @@ export function ExpenseCategories() {
                     top: 0,
                     backgroundColor: 'var(--color-bg)',
                     zIndex: 20,
-                    paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+                    paddingTop: 'calc(3rem + env(safe-area-inset-top))',
                     paddingBottom: '1rem',
                     paddingLeft: '1.5rem',
                     paddingRight: '1.5rem',

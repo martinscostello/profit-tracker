@@ -108,14 +108,35 @@ export function AddSale() {
                 minHeight: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
-                paddingTop: 'calc(1.5rem + env(safe-area-inset-top))'
+                paddingTop: 'calc(3.5rem + env(safe-area-inset-top))'
             }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                    <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', padding: 0, marginRight: '1rem' }}>
-                        <ChevronLeft size={24} />
-                    </button>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Add Sale</h1>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', padding: 0, marginRight: '1rem' }}>
+                            <ChevronLeft size={24} />
+                        </button>
+                        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Add Sale</h1>
+                    </div>
+                    {step === 'product' && (
+                        <button
+                            onClick={() => navigate('/custom-sale')}
+                            style={{
+                                backgroundColor: '#15803d', // green-700
+                                color: 'white',
+                                border: 'none',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '0.5rem',
+                                fontWeight: '600',
+                                fontSize: '0.875rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            Custom Sale
+                        </button>
+                    )}
                 </div>
 
                 {step === 'product' ? (

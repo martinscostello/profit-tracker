@@ -55,7 +55,6 @@ textarea {
 
 #root {
   min-height: 100vh;
-  display: flex;
   flex-direction: column;
 }
 
@@ -73,6 +72,8 @@ button {
 button:hover {
   opacity: 0.9;
 }
+
+
 
 @keyframes breathe {
   0% {

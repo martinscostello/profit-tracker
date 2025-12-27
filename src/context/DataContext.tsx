@@ -6,7 +6,7 @@ import { ApiService } from '../services/ApiService';
 import { GoogleSheetsService } from '../services/GoogleSheetsService';
 import { useAuth } from './AuthContext';
 import { io, Socket } from 'socket.io-client';
-import type { Product, Sale, BusinessProfile, Expense } from '../types';
+import type { Product, Sale, BusinessProfile, Expense, TaxSettings } from '../types';
 
 interface DataContextType {
     products: Product[];
@@ -32,6 +32,7 @@ interface DataContextType {
     deleteExpense: (id: string) => Promise<void>;
     expenseCategories: string[];
     updateExpenseCategories: (categories: string[]) => void;
+    updateTaxSettings: (settings: TaxSettings) => Promise<void>;
     getTodayStats: () => { revenue: number; cost: number; grossProfit: number; expenses: number; netProfit: number; itemsSold: number };
     syncStatus: 'idle' | 'syncing' | 'error';
     syncDataNow: () => Promise<void>;
@@ -316,7 +317,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://192.168.1.181:3001/api';
         const socketUrl = apiUrl.replace('/api', '');
         const newSocket = io(socketUrl);
         setSocket(newSocket);
@@ -767,10 +768,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
     };
 
+
+
+
+    const updateTaxSettings = async (settings: TaxSettings) => {
+        // Optimistic update: Don't wait for network
+        updateBusiness({ taxSettings: settings });
+    };
+
     const updateBusiness = async (updates: Partial<BusinessProfile>) => {
+        // 1. Update Local State Immediately
         setBusinesses(prev => prev.map(b => b.id === activeBusinessId ? { ...b, ...updates } : b));
+
+        // 2. Persist to Local Storage
+        const currentBiz = businesses.find(b => b.id === activeBusinessId);
+        if (currentBiz) {
+            const updatedProfile = { ...currentBiz, ...updates };
+            const updatedList = businesses.map(b => b.id === activeBusinessId ? updatedProfile : b);
+            StorageService.save('businesses', updatedList);
+        }
+
+        // 3. Sync to Cloud (Fire and Forget)
         if (currentUser && activeBusinessId) {
-            try { await ApiService.updateBusiness(activeBusinessId, updates); } catch (e) { console.error(e); }
+            ApiService.updateBusiness(activeBusinessId, updates).catch((e: any) => console.error("Background sync failed:", e));
         }
     };
 
@@ -924,6 +944,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             updateBusiness, addBusiness, importBusiness, switchBusiness, deleteBusiness, leaveBusiness,
             addExpense, deleteExpense,
             expenseCategories, updateExpenseCategories,
+            updateTaxSettings,
             getTodayStats, syncStatus, syncDataNow,
             pendingConsolidation, resolveConsolidation,
             dashboardStats, refreshDashboardStats

@@ -52,5 +52,31 @@ export const NotificationService = {
 
     async areEnabled() {
         return await LocalNotifications.areEnabled();
+    },
+
+    async createChannels() {
+        try {
+            // Android 8+ requires channels for sounds
+            await LocalNotifications.createChannel({
+                id: 'default',
+                name: 'Default',
+                importance: 5,
+                visibility: 1
+            });
+
+            const tones = ['cash', 'chime', 'alert', 'spaceship'];
+            for (const tone of tones) {
+                await LocalNotifications.createChannel({
+                    id: tone,
+                    name: tone.charAt(0).toUpperCase() + tone.slice(1),
+                    importance: 5,
+                    sound: `${tone}.wav`, // e.g. 'cash.wav'
+                    visibility: 1
+                });
+            }
+            console.log('Notification channels created');
+        } catch (e) {
+            console.error('Error creating notification channels:', e);
+        }
     }
 };

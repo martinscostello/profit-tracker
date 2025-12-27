@@ -60,7 +60,14 @@ export interface Collaborator {
     permissions?: Permissions;
 }
 
+export interface TaxSettings {
+    businessType: 'SOLO' | 'REGISTERED' | 'LIMITED';
+    hasExemptItems: 'YES' | 'NO' | 'IDK';
+    checkExemptItems?: boolean; // Derived from hasExemptItems
+}
 export type SubscriptionPlan = 'FREE' | 'LITE' | 'ENTREPRENEUR' | 'UNLIMITED';
+
+
 
 export interface BusinessProfile {
     id: string;
@@ -75,4 +82,5 @@ export interface BusinessProfile {
     ownerId?: string;
     collaborators: Collaborator[];
     expenseCategories?: string[];
+    taxSettings?: TaxSettings;
 }

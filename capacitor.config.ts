@@ -17,14 +17,14 @@ const config: CapacitorConfig = {
     },
     GoogleAuth: {
       scopes: ['profile', 'email', 'https://www.googleapis.com/auth/spreadsheets.readonly'],
-      serverClientId: '740425791784-9fjocgu3er172e39uohspf1udq6e0are.apps.googleusercontent.com',
+      serverClientId: '104181077468-lemhostdlkt6pc4om5fr1o77tvhqebup.apps.googleusercontent.com',
       forceCodeForRefreshToken: true
     }
   },
   server: {
     androidScheme: 'http', // CRITICAL: Allow HTTP to avoid Mixed Content errors with http API
     cleartext: true,
-    allowNavigation: ['*', 'http://192.168.1.200:5000']
+    allowNavigation: ['*', 'http://192.168.1.181:3001', 'http://10.0.2.2:3001', 'http://localhost:3001']
   }
 };
 

@@ -69,7 +69,7 @@ export function Expenses() {
                 height: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
-                paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+                paddingTop: 'calc(2rem + env(safe-area-inset-top))',
                 paddingBottom: isAdding ? '0' : '5rem' // Nav height is handled by Layout but we need space for content
             }}>
                 {/* Fixed Header Section */}

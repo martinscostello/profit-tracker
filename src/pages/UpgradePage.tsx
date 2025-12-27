@@ -20,8 +20,6 @@ export function UpgradePage() {
             setLoading(false);
             setSuccess(true);
             updateBusiness({ isPro: true, plan: plan });
-            // Auto close/redirect after 5 seconds of celebration if desired, 
-            // but user might want to read the success message.
         }, 2000);
     };
 
@@ -87,7 +85,7 @@ export function UpgradePage() {
         <Layout showNav={false}>
             <div style={{
                 position: 'sticky', top: 0, backgroundColor: 'var(--color-bg)', zIndex: 20,
-                paddingTop: 'calc(1.5rem + env(safe-area-inset-top))', paddingBottom: '1rem',
+                paddingTop: 'calc(3rem + env(safe-area-inset-top))', paddingBottom: '1rem',
                 paddingLeft: '1.5rem', paddingRight: '1.5rem', borderBottom: '1px solid var(--color-border)',
                 display: 'flex', alignItems: 'center', gap: '1rem'
             }}>
@@ -142,11 +140,11 @@ export function UpgradePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
 
                     {[
-                        { id: 'LITE', name: 'Pro Lite', price: 2000, color: '#1e293b', bg: 'white', border: '#e2e8f0', features: ['All Free Features', '+1 Manager', 'Full History', 'Export Reports', 'Tax Calculator'] },
-                        { id: 'ENTREPRENEUR', name: 'Entrepreneur', price: 5000, color: '#9333ea', bg: '#faf5ff', border: '#9333ea', popular: true, features: ['5 Businesses', 'Up to 5 Managers', 'Priority Support', 'All Lite Features'] },
-                        { id: 'UNLIMITED', name: 'Unlimited', price: 25000, color: '#1e293b', bg: 'white', border: '#e2e8f0', features: ['Unlimited Managers', 'Unlimited Businesses', 'Dedicated Agent', 'All Entrepreneur Features'] }
+                        { id: 'LITE', name: 'Pro Lite', price: 2000, color: '#1e293b', bg: 'white', border: '#e2e8f0', features: ['All Free Features', 'Automatic Tax Estimates', 'Avoid Tax Surprises', '+3 Businesses', '+1 Manager per Business', 'Full History', 'Export Reports'] },
+                        { id: 'ENTREPRENEUR', name: 'Entrepreneur', price: 5000, color: '#9333ea', bg: '#faf5ff', border: '#9333ea', popular: true, features: ['5 Businesses', '3 Managers per Business', 'Priority Support', 'All Lite Features', 'All Tax Features'] },
+                        { id: 'UNLIMITED', name: 'Unlimited', price: 25000, color: '#1e293b', bg: 'white', border: '#e2e8f0', features: ['Unlimited Businesses', 'Unlimited Managers', 'Dedicated Agent', 'All Entrepreneur Features'] }
                     ].map((plan) => {
-                        const isActive = (business.plan || 'FREE') === plan.id;
+                        const isActive = business.isPro && business.plan === plan.id;
 
                         return (
                             <div
