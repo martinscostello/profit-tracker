@@ -2,7 +2,7 @@ services:
   - type: web
     name: profit-tracker-api
     env: node
-    rootDirectory: server
+    rootDir: server
     buildCommand: npm install
     startCommand: npm start
     plan: free
