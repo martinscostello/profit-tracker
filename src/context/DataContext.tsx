@@ -833,6 +833,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     const deleteBusiness = async (id: string) => {
+        // cleanup local storage explicitly
+        StorageService.remove(`products_${id}`);
+        StorageService.remove(`sales_${id}`);
+        StorageService.remove(`expenses_${id}`);
+        StorageService.remove(`expenseCategories_${id}`);
+
         setBusinesses(prev => {
             const updated = prev.filter(b => b.id !== id);
             StorageService.save('businesses', updated);

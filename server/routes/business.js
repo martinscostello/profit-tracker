@@ -1,5 +1,8 @@
 import express from 'express';
 import { Business } from '../models/Business.js';
+import { Product } from '../models/Product.js';
+import { Sale } from '../models/Sale.js';
+import { Expense } from '../models/Expense.js';
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -67,7 +70,13 @@ router.delete('/:id', auth, async (req, res) => {
             ownerId: req.user._id.toString()
         });
 
+
         if (!business) return res.status(404).send({ message: "Business not found or unauthorized" });
+
+        // CASCADE DELETE: Remove all associated data
+        await Product.deleteMany({ businessId: business.id });
+        await Sale.deleteMany({ businessId: business.id });
+        await Expense.deleteMany({ businessId: business.id });
 
         // Notify clients to remove it locally
         req.app.get('io').to(business.id).emit('business_deleted', business.id);
