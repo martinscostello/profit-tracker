@@ -42,7 +42,7 @@ export function DataConsolidationModal() {
 
                 {/* Data Summary */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                    <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+                    <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                             <Database size={14} /> Local Data
                         </div>
@@ -71,7 +71,7 @@ export function DataConsolidationModal() {
                         disabled={isSyncing}
                         style={{
                             width: '100%', padding: '1.25rem', textAlign: 'left',
-                            backgroundColor: 'white', border: '2px solid var(--color-border)',
+                            backgroundColor: 'var(--color-surface)', border: '2px solid var(--color-border)',
                             borderRadius: '1rem', cursor: 'pointer', transition: 'all 0.2s',
                             display: 'flex', alignItems: 'center', gap: '1rem'
                         }}
@@ -91,7 +91,7 @@ export function DataConsolidationModal() {
 
                     {/* Option 2: Merge into existing */}
                     <div style={{
-                        padding: '1.25rem', backgroundColor: 'white',
+                        padding: '1.25rem', backgroundColor: 'var(--color-surface)',
                         border: '2px solid var(--color-border)', borderRadius: '1rem',
                         display: 'flex', flexDirection: 'column', gap: '1rem'
                     }}>
@@ -112,7 +112,7 @@ export function DataConsolidationModal() {
                             onChange={(e) => setSelectedTarget(e.target.value)}
                             style={{
                                 width: '100%', padding: '0.75rem', borderRadius: '0.5rem',
-                                border: '1px solid var(--color-border)', backgroundColor: '#f8fafc'
+                                border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-subtle)'
                             }}
                         >
                             <option value="">Select Target Business</option>

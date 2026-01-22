@@ -142,7 +142,7 @@ export function ContactPage() {
                     <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <a href="mailto:support@dailyprofit.app" style={{
                             display: 'flex', alignItems: 'center', gap: '1rem',
-                            padding: '1rem', backgroundColor: 'white', borderRadius: '1rem',
+                            padding: '1rem', backgroundColor: 'var(--color-surface)', borderRadius: '1rem',
                             border: '1px solid var(--color-border)', textDecoration: 'none', color: 'var(--color-text)'
                         }}>
                             <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#eff6ff', color: '#3b82f6' }}>
@@ -156,7 +156,7 @@ export function ContactPage() {
 
                         <div style={{
                             display: 'flex', alignItems: 'center', gap: '1rem',
-                            padding: '1rem', backgroundColor: 'white', borderRadius: '1rem',
+                            padding: '1rem', backgroundColor: 'var(--color-surface)', borderRadius: '1rem',
                             border: '1px solid var(--color-border)', color: 'var(--color-text)'
                         }}>
                             <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#f0fdf4', color: '#16a34a' }}>

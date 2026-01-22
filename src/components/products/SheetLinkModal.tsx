@@ -116,33 +116,6 @@ export function SheetLinkModal({ isOpen, onClose, onImportProducts, onLocalImpor
                 {mode === 'SELECT' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <button
-                            onClick={() => setMode('SHEET')}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: '1rem',
-                                padding: '1rem', borderRadius: '0.75rem',
-                                border: `1px solid ${currentSheetName ? '#22c55e' : 'var(--color-border)'}`,
-                                backgroundColor: currentSheetName ? '#f0fdf4' : 'var(--color-bg)',
-                                cursor: 'pointer', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ padding: '0.75rem', backgroundColor: '#dcfce7', borderRadius: '0.5rem', color: '#16a34a' }}>
-                                <FileSpreadsheet size={24} />
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
-                                    {currentSheetName ? 'Change Linked Sheet' : 'Link Google Sheet'}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                    {currentSheetName ? (
-                                        <span>Current: <strong>{currentSheetName}</strong></span>
-                                    ) : (
-                                        'Auto-syncs prices & stock from Sheet'
-                                    )}
-                                </div>
-                            </div>
-                        </button>
-
-                        <button
                             onClick={handleLocal}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '1rem',
@@ -156,8 +129,35 @@ export function SheetLinkModal({ isOpen, onClose, onImportProducts, onLocalImpor
                                 <HardDrive size={24} />
                             </div>
                             <div>
-                                <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Local Backup</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Import JSON backup from device</div>
+                                <div style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--color-text)' }}>Select sheet from device</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Import an excel from local storage</div>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => setMode('SHEET')}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '1rem',
+                                padding: '1rem', borderRadius: '0.75rem',
+                                border: `1px solid ${currentSheetName ? '#22c55e' : 'var(--color-border)'}`,
+                                backgroundColor: currentSheetName ? '#f0fdf4' : 'var(--color-bg)',
+                                cursor: 'pointer', textAlign: 'left'
+                            }}
+                        >
+                            <div style={{ padding: '0.75rem', backgroundColor: '#dcfce7', borderRadius: '0.5rem', color: '#16a34a' }}>
+                                <FileSpreadsheet size={24} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--color-text)' }}>
+                                    {currentSheetName ? 'Change Linked Sheet' : 'Link with Google Sheets'}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                    {currentSheetName ? (
+                                        <span>Current: <strong>{currentSheetName}</strong></span>
+                                    ) : (
+                                        'Auto-syncs Stocks and prices from linked sheet'
+                                    )}
+                                </div>
                             </div>
                         </button>
                     </div>

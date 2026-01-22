@@ -8,6 +8,15 @@ import { useAuth } from './AuthContext';
 import { io, Socket } from 'socket.io-client';
 import type { Product, Sale, BusinessProfile, Expense, TaxSettings } from '../types';
 
+export interface BucketItem {
+    productId: string;
+    productName: string;
+    quantity: number;
+    sellingPrice: number;
+    // Derived for optimization
+    costPrice: number;
+}
+
 interface DataContextType {
     products: Product[];
     sales: Sale[];
@@ -44,6 +53,13 @@ interface DataContextType {
     resolveConsolidation: (choice: 'merge' | 'create_new' | 'use_cloud' | 'replace_cloud', targetBusinessId?: string) => Promise<void>;
     dashboardStats: any;
     refreshDashboardStats: () => Promise<void>;
+
+    // Sales Bucket
+    salesBucket: BucketItem[];
+    addToBucket: (item: BucketItem) => void;
+    removeFromBucket: (index: number) => void;
+    clearBucket: () => void;
+    checkoutBucket: (date: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -794,6 +810,83 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // --- Sales Bucket Logic ---
+    const [salesBucket, setSalesBucket] = useState<BucketItem[]>(() =>
+        activeBusinessId ? StorageService.load(`salesBucket_${activeBusinessId}`, []) : []
+    );
+
+    // Save bucket when it changes
+    useEffect(() => {
+        if (activeBusinessId) {
+            StorageService.save(`salesBucket_${activeBusinessId}`, salesBucket);
+        }
+    }, [salesBucket, activeBusinessId]);
+
+    // Load bucket when business switches
+    useEffect(() => {
+        if (activeBusinessId) {
+            setSalesBucket(StorageService.load(`salesBucket_${activeBusinessId}`, []));
+        } else {
+            setSalesBucket([]);
+        }
+    }, [activeBusinessId]);
+
+    const addToBucket = (item: BucketItem) => {
+        setSalesBucket(prev => {
+            // Optional: Merge if same product and price?
+            // For now, simple append allows distinct entries (e.g. different prices?)
+            // But usually merging same product is better UX if price is same.
+            const existingIdx = prev.findIndex(i => i.productId === item.productId && i.sellingPrice === item.sellingPrice);
+            if (existingIdx > -1) {
+                const updated = [...prev];
+                updated[existingIdx].quantity += item.quantity;
+                return updated;
+            }
+            return [...prev, item];
+        });
+        showToast("Added to Bucket", "success");
+    };
+
+    const removeFromBucket = (index: number) => {
+        setSalesBucket(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const clearBucket = () => {
+        setSalesBucket([]);
+    };
+
+    const checkoutBucket = async (date: string) => {
+        if (salesBucket.length === 0) return;
+
+        try {
+            // Optimistic: Fire all requests. Local state updates in addSale are synchronous (React state), 
+            // so effectively instant. API calls run in background.
+            salesBucket.forEach(item => {
+                const revenue = item.sellingPrice * item.quantity;
+                const cost = item.costPrice * item.quantity;
+                const profit = revenue - cost;
+
+                // No await here -> Optimistic speed!
+                addSale({
+                    businessId: activeBusinessId || '',
+                    productId: item.productId,
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    revenue,
+                    cost,
+                    profit,
+                    date
+                }).catch(e => console.error(`Failed to add item ${item.productName}`, e));
+            });
+
+            clearBucket();
+            showToast("Processing sales in background...", "success");
+        } catch (e) {
+            console.error("Checkout failed", e);
+            showToast("Failed to initiate checkout.", "error");
+        }
+    };
+
     const switchBusiness = (id: string) => {
         setActiveBusinessId(id);
         StorageService.save('active_business_id', id);
@@ -953,7 +1046,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
             updateTaxSettings,
             getTodayStats, syncStatus, syncDataNow,
             pendingConsolidation, resolveConsolidation,
-            dashboardStats, refreshDashboardStats
+            dashboardStats, refreshDashboardStats,
+            salesBucket, addToBucket, removeFromBucket, clearBucket, checkoutBucket
         }}>
             {children}
         </DataContext.Provider>

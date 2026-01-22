@@ -47,9 +47,9 @@ export function BackupSettings() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
                     {/* Local Backup Section */}
-                    <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5rem', border: '1px solid var(--color-border)' }}>
+                    <div style={{ backgroundColor: 'var(--color-surface)', borderRadius: '1rem', padding: '1.5rem', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#eff6ff', color: '#3b82f6' }}>
+                            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'var(--color-bg-subtle)', color: '#3b82f6' }}>
                                 <Save size={20} />
                             </div>
                             <h3 style={{ fontWeight: '600' }}>Local Backup</h3>
@@ -68,8 +68,9 @@ export function BackupSettings() {
                                     padding: '0.75rem',
                                     borderRadius: '0.5rem',
                                     border: '1px solid var(--color-border)',
-                                    backgroundColor: 'white',
-                                    fontSize: '1rem'
+                                    backgroundColor: 'var(--color-surface)',
+                                    fontSize: '1rem',
+                                    color: 'var(--color-text)'
                                 }}
                             >
                                 <option value="manual">Manual Only</option>
@@ -101,7 +102,7 @@ export function BackupSettings() {
 
                     {/* Cloud Backup Section (Locked) */}
                     <div style={{
-                        backgroundColor: '#f8fafc',
+                        backgroundColor: 'var(--color-surface)',
                         borderRadius: '1rem',
                         padding: '1.5rem',
                         border: '1px solid var(--color-border)',
@@ -109,7 +110,7 @@ export function BackupSettings() {
                         overflow: 'hidden'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', opacity: 0.7 }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#f3e8ff', color: '#9333ea' }}>
+                            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'var(--color-bg-subtle)', color: '#9333ea' }}>
                                 <Cloud size={20} />
                             </div>
                             <h3 style={{ fontWeight: '600' }}>Cloud Backup</h3>

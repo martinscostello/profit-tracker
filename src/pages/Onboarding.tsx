@@ -73,7 +73,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '2rem',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-bg)',
                 textAlign: 'center',
                 userSelect: 'none',
                 overflow: 'hidden' // Prevent scroll bars during animation

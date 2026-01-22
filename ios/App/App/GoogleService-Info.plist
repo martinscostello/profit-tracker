@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>104181077468-jo1pe6jv2pehhvch2v29gpuifj6l82nk.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.104181077468-jo1pe6jv2pehhvch2v29gpuifj6l82nk</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>104181077468-8h9rchio3rrnvuc4cb6oj9cv1re7bvp6.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyD8FUC_jCw1AicYY2wnVvLA0hQnjTdS-bs</string>
+	<key>GCM_SENDER_ID</key>
+	<string>104181077468</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.profittracker.app</string>
+	<key>PROJECT_ID</key>
+	<string>profit-tracking-app-56efb</string>
+	<key>STORAGE_BUCKET</key>
+	<string>profit-tracking-app-56efb.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:104181077468:ios:c1039a5c70ef887eb72b19</string>
+</dict>
+</plist>

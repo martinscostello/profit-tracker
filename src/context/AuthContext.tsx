@@ -17,6 +17,7 @@ interface AuthContextType {
     currentUser: User | null;
     loading: boolean;
     googleLogin: (credential: string, accessToken?: string) => Promise<void>;
+    appleLogin: (identityToken: string, giveName?: string | null, familyName?: string | null) => Promise<void>;
     signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
     updateProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>;
@@ -214,6 +215,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const appleLogin = async (identityToken: string, givenName?: string | null, familyName?: string | null) => {
+        try {
+            // 1. Authenticate & Get JWT
+            const loginRes = await api.post('/auth/apple', {
+                identityToken,
+                givenName,
+                familyName
+            });
+            const { token, user } = loginRes.data;
+
+            // Temporarily set token for API calls
+            localStorage.setItem('auth_token', token);
+
+            // 2. Sync
+            const success = await performSync(identityToken); // Using identityToken as sync key if needed, or just standard flow
+            if (!success) return; // Conflict modal is open
+
+            // 3. Finalize Login
+            setCurrentUser(user);
+            localStorage.setItem('user_profile', JSON.stringify(user));
+            showToast("Signed in with Apple", "success");
+        } catch (error: any) {
+            console.error("Apple Login Failed:", error);
+            if (!syncConflict.isOpen) {
+                localStorage.removeItem('auth_token');
+                showToast("Apple Sign-in Failed", "error");
+            }
+            throw error;
+        }
+    };
+
     const resolveSyncConflict = async (resolutionData: any) => {
         try {
             if (!syncConflict.idToken) return;
@@ -316,7 +348,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ currentUser, loading, googleLogin, signInAsGuest, logout, updateProfile: updateUserProfile }}>
+        <AuthContext.Provider value={{ currentUser, loading, googleLogin, appleLogin, signInAsGuest, logout, updateProfile: updateUserProfile }}>
             {children}
             <SyncConflictModal
                 isOpen={syncConflict.isOpen}

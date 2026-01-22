@@ -4,18 +4,19 @@ import { useData } from '../context/DataContext';
 import { Layout } from '../components/layout/Layout';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ChevronLeft, Search, Check, Calculator } from 'lucide-react';
+import { ChevronLeft, Search, Check, Calculator, ShoppingBag, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 
 export function AddSale() {
     const navigate = useNavigate();
-    const { business, products, addSale } = useData();
-    const [step, setStep] = useState<'product' | 'details'>('product');
+    const { business, products, addSale, addToBucket, salesBucket, removeFromBucket, checkoutBucket } = useData();
+    const [step, setStep] = useState<'product' | 'details' | 'bucket'>('product');
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [quantity, setQuantity] = useState('1');
     const [sellingPrice, setSellingPrice] = useState('');
     const [date, setDate] = useState(new Date().toLocaleDateString('en-CA'));
+    const [isSubmitting, setIsSubmitting] = useState(false);
     // const quantityInputRef = useRef<HTMLInputElement>(null);
 
     // ... (rest of code)
@@ -50,46 +51,88 @@ export function AddSale() {
         };
     }, [selectedProduct, quantity, sellingPrice]);
 
-    const handleSave = () => {
+
+    const handleAddToBucket = () => {
         if (!selectedProduct) return;
 
-        // Date Logic vs Sorting
-        // 1. If user selected 'Today' (in their local time), use the REAL current timestamp (toISOString).
-        //    This ensures "Just Now" is truly sorted as newest.
-        // 2. If user selected a past/future date, preserve that date (midnight) or append current time? 
-        //    Appending current time to a past date is risky (as seen with timezone bugs). 
-        //    Let's stick to: "If Today -> Now(). If Custom -> Date + T00:00:00" OR "Date + CurrentTime" if consistent.
-        //    Safest: If input date string == local today string, use new Date().toISOString().
-        //    Else: use the input date string (which likely defaults to UTC 00:00 by simple usage is ok, or append user's local time?).
-        //    Actually, implicit string 'YYYY-MM-DD' usually resolves to UTC midnight.
-
-        const todayLocal = new Date().toLocaleDateString('en-CA');
-        let finalDate = date;
-
-        if (date === todayLocal) {
-            // Construct LOCAL ISO string (YYYY-MM-DDTHH:mm:ss) to match local clock
-            const now = new Date();
-            const offsetMs = now.getTimezoneOffset() * 60000;
-            const localDate = new Date(now.getTime() - offsetMs);
-            finalDate = localDate.toISOString().slice(0, 19); // Remove 'Z' and ms to force Local interpretation
-        } else {
-            // Keep selected date (YYYY-MM-DD)
-            // This defaults to Local Midnight when parsed
-            finalDate = date;
-        }
-
-        addSale({
-            businessId: business.id,
+        addToBucket({
             productId: selectedProduct.id,
             productName: selectedProduct.name,
             quantity: parseInt(quantity) || 1,
-            revenue: calculations.revenue,
-            cost: calculations.cost,
-            profit: calculations.profit,
-            date: finalDate
+            sellingPrice: parseFloat(sellingPrice) || 0,
+            costPrice: selectedProduct.costPrice || 0
         });
 
-        navigate('/');
+        // Reset and go back to product list to add more
+        setQuantity('1');
+        setSelectedProductId(null);
+        setStep('product');
+    };
+
+    const handleQuickSell = async () => {
+        if (!selectedProduct || isSubmitting) return;
+
+        try {
+            setIsSubmitting(true);
+            // Date Logic vs Sorting (Same as standard addSale logic)
+            const todayLocal = new Date().toLocaleDateString('en-CA');
+            let finalDate = date;
+
+            if (date === todayLocal) {
+                const now = new Date();
+                const offsetMs = now.getTimezoneOffset() * 60000;
+                const localDate = new Date(now.getTime() - offsetMs);
+                finalDate = localDate.toISOString().slice(0, 19);
+            }
+
+            addSale({
+                businessId: business.id,
+                productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                quantity: parseInt(quantity) || 1,
+                revenue: calculations.revenue,
+                cost: calculations.cost,
+                profit: calculations.profit,
+                date: finalDate
+            }).catch(e => {
+                console.error("Background Add Sale Failed", e);
+                // Optionally show error toast here using a global toaster reference if possible, 
+                // but component is likely unmounted.
+            });
+
+            navigate('/');
+        } catch (error) {
+            console.error("Quick Sell Failed", error);
+            setIsSubmitting(false); // Only re-enable on error, otherwise we navigate away
+        }
+    };
+
+    const handleCheckout = async () => {
+        if (isSubmitting) return;
+
+        try {
+            setIsSubmitting(true);
+            // Use today's date logic from before or just simple local ISO
+            // If user wants custom date for the whole batch, we can add a date picker in bucket view
+            // For now, let's assume "Today" or use the date from the last added item? 
+            // Better: Allow date selection in Bucket Review.
+
+            let finalDate = date; // Default to state date (initially today)
+            const todayLocal = new Date().toLocaleDateString('en-CA');
+
+            if (finalDate === todayLocal) {
+                const now = new Date();
+                const offsetMs = now.getTimezoneOffset() * 60000;
+                const localDate = new Date(now.getTime() - offsetMs);
+                finalDate = localDate.toISOString().slice(0, 19);
+            }
+
+            checkoutBucket(finalDate).catch(e => console.error("Background Checkout Failed", e));
+            navigate('/');
+        } catch (error) {
+            console.error("Bucket Checkout Failed", error);
+            setIsSubmitting(false);
+        }
     };
 
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,7 +182,85 @@ export function AddSale() {
                     )}
                 </div>
 
-                {step === 'product' ? (
+                {step === 'bucket' ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ShoppingBag size={24} color="var(--color-primary)" />
+                            Review Items ({salesBucket.length})
+                        </h2>
+
+                        {salesBucket.length === 0 ? (
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                                <ShoppingBag size={48} />
+                                <p style={{ marginTop: '1rem' }}>Bucket is empty</p>
+                                <Button onClick={() => setStep('product')} style={{ marginTop: '1rem' }} variant="secondary">
+                                    Add Items
+                                </Button>
+                            </div>
+                        ) : (
+                            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {salesBucket.map((item, idx) => (
+                                    <div key={idx} style={{
+                                        padding: '1rem',
+                                        backgroundColor: 'var(--color-surface)',
+                                        color: 'var(--color-text)',
+                                        borderRadius: '0.75rem',
+                                        border: '1px solid var(--color-border)',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontWeight: '600' }}>{item.productName}</div>
+                                            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                                                {item.quantity} x {formatCurrency(item.sellingPrice)}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                                                {formatCurrency(item.quantity * item.sellingPrice)}
+                                            </div>
+                                            <button
+                                                onClick={() => removeFromBucket(idx)}
+                                                style={{ color: '#ef4444', background: 'none', border: 'none', padding: '0.5rem' }}
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '0.5rem', color: 'var(--color-primary)' }}>
+                                        <span>Total</span>
+                                        <span>{formatCurrency(salesBucket.reduce((acc, i) => acc + (i.quantity * i.sellingPrice), 0))}</span>
+                                    </div>
+
+                                    {/* Optional: Date Picker for the whole batch */}
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', display: 'block' }}>Sale Date</label>
+                                        <Input
+                                            type="date"
+                                            value={date}
+                                            onChange={e => setDate(e.target.value)}
+                                            style={{ padding: '0.75rem' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <Button onClick={() => setStep('product')} variant="secondary" style={{ flex: 1 }}>
+                                            Add More
+                                        </Button>
+                                        <Button onClick={handleCheckout} style={{ flex: 2 }} disabled={isSubmitting}>
+                                            <Check size={20} style={{ marginRight: '0.5rem' }} />
+                                            {isSubmitting ? 'Processing...' : 'Confirm All'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : step === 'product' ? (
                     <>
                         <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                             <Search size={20} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
@@ -155,7 +276,8 @@ export function AddSale() {
                                     borderRadius: '0.75rem',
                                     border: '1px solid var(--color-primary)',
                                     boxShadow: '0 0 0 2px rgba(22, 163, 74, 0.1)',
-                                    backgroundColor: 'white',
+                                    backgroundColor: 'var(--color-surface)',
+                                    color: 'var(--color-text)',
                                     fontSize: '1rem',
                                     outline: 'none'
                                 }}
@@ -191,6 +313,35 @@ export function AddSale() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Bucket FAB */}
+                        {salesBucket.length > 0 && (
+                            <button
+                                onClick={() => setStep('bucket')}
+                                style={{
+                                    position: 'fixed',
+                                    bottom: '2rem',
+                                    right: '2rem',
+                                    backgroundColor: 'var(--color-primary)',
+                                    color: 'white',
+                                    padding: '1rem 1.5rem',
+                                    borderRadius: '2rem',
+                                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.4)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    fontWeight: 'bold',
+                                    zIndex: 50,
+                                    border: 'none'
+                                }}
+                            >
+                                <ShoppingBag size={24} />
+                                <span>{salesBucket.length} Items</span>
+                                <span style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                                    {formatCurrency(salesBucket.reduce((acc, i) => acc + (i.quantity * i.sellingPrice), 0))}
+                                </span>
+                            </button>
+                        )}
                     </>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -250,27 +401,18 @@ export function AddSale() {
                                     }}
                                 />
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <Input
-                                    label="Date"
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    style={{ fontSize: '1.25rem', padding: '1rem' }}
-                                    enterKeyHint="done"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.currentTarget.blur();
-                                            handleSave();
-                                        }
-                                    }}
-                                />
-                            </div>
                         </div>
+                        {/* Date moved to bucket review for bulk, or keep here for single item? 
+                                Let's remove date from single item view to simplify, 
+                                and strictly use "Add to Bucket" flow. 
+                                Or keep it but it applies if we do single add? 
+                                Let's hide date here to reduce cognitive load, defaulting to today for the item, 
+                                and allow override in review. 
+                            */}
 
                         {/* Calculation Preview */}
                         <div style={{
-                            backgroundColor: '#F0FDFA', // Light green bg
+                            backgroundColor: 'var(--color-bg-subtle)', // Light green bg
                             border: '1px dashed var(--color-primary)',
                             borderRadius: '1rem',
                             padding: '1.5rem',
@@ -297,9 +439,14 @@ export function AddSale() {
                             </div>
                         </div>
 
-                        <Button onClick={handleSave} style={{ padding: '1rem', fontSize: '1.125rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                            <Check size={20} /> Confirm Sale
-                        </Button>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <Button onClick={handleAddToBucket} variant="secondary" style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                                <ShoppingBag size={20} /> Add to Bucket
+                            </Button>
+                            <Button onClick={handleQuickSell} disabled={isSubmitting} style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', backgroundColor: '#9333ea', color: 'white', border: 'none', opacity: isSubmitting ? 0.7 : 1 }}>
+                                <Check size={20} /> {isSubmitting ? 'Processing...' : 'Quick Sell'}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>

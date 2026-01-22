@@ -110,7 +110,7 @@ export const shareTaxReportPDF = async (
         body: sortedSales.map(s => [
             format(new Date(s.date), 'MMM d, yyyy HH:mm'),
             s.productName,
-            business.taxSettings?.hasExemptItems === 'YES' && isProductExempt(s.productName) ? 'Tax Exempt' : 'Taxable',
+            isProductExempt(s.productName) ? 'Tax Exempt' : 'Taxable',
             s.quantity.toString(),
             `${currency}${s.revenue.toLocaleString()}`
         ]),
@@ -183,7 +183,7 @@ export const shareTaxReportExcel = async (
         ...sortedSales.map(s => [
             format(new Date(s.date), 'MMM d, yyyy HH:mm'),
             s.productName,
-            business.taxSettings?.hasExemptItems === 'YES' && isProductExempt(s.productName) ? 'Tax Exempt' : 'Taxable',
+            isProductExempt(s.productName) ? 'Tax Exempt' : 'Taxable',
             s.quantity,
             s.revenue,
             s.cost,

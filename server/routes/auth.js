@@ -113,6 +113,50 @@ router.post('/google', async (req, res) => {
     }
 });
 
+// Apple Auth
+router.post('/apple', async (req, res) => {
+    try {
+        const { identityToken, givenName, familyName } = req.body;
+
+        // MVP: Decode token without strict signature verification (requires fetching Apple's JWKS)
+        // In production, use 'apple-signin-auth' or 'jwks-rsa' to verify signature.
+        const decoded = jwt.decode(identityToken);
+
+        if (!decoded || !decoded.sub) {
+            return res.status(401).send({ error: 'Invalid Apple Identity Token' });
+        }
+
+        const { email, sub: appleId } = decoded;
+        const name = (givenName && familyName) ? `${givenName} ${familyName}` : (givenName || 'Apple User');
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = new User({
+                email,
+                displayName: name,
+                photoURL: '', // Apple doesn't provide photo
+                googleId: appleId, // Reusing googleId field or we should add 'appleId' schema but googleId is likely just 'providerId' in practice
+                password: Math.random().toString(36).slice(-10)
+            });
+            await user.save();
+        } else {
+            // Update name if provided and user doesn't have one (Apple only sends name on first login)
+            if (name && name !== 'Apple User' && (!user.displayName || user.displayName === 'Apple User')) {
+                user.displayName = name;
+                await user.save();
+            }
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
+        res.send({ user, token });
+
+    } catch (error) {
+        console.error('Apple Auth Error:', error);
+        res.status(401).send({ error: 'Apple authentication failed' });
+    }
+});
+
 
 
 // Sync Local Data

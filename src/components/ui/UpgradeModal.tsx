@@ -66,14 +66,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             padding: '1.5rem', backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)'
         }}>
             <div style={{
-                backgroundColor: 'white', width: '100%', maxWidth: '400px',
+                backgroundColor: 'var(--color-surface)', width: '100%', maxWidth: '400px',
                 borderRadius: '1.5rem', position: 'relative',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 padding: '2.5rem 2rem', textAlign: 'center'
             }}>
                 <button onClick={onClose} style={{
                     position: 'absolute', right: '1rem', top: '1rem',
-                    background: 'white', border: 'none', borderRadius: '50%', padding: '0.5rem',
+                    background: 'var(--color-bg-subtle)', border: 'none', borderRadius: '50%', padding: '0.5rem',
                     cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                 }}>
                     <X size={20} color="#64748b" />
@@ -83,7 +83,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     <VipBadge />
                 </div>
 
-                <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.5rem', fontWeight: '500' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem', fontWeight: '500' }}>
                     Unlock the full power of your Business
                 </p>
 
@@ -92,42 +92,42 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#16A34A', marginBottom: '1rem' }}>
                             You are a Pro Member!
                         </h2>
-                        <p style={{ color: '#475569', fontSize: '1rem', lineHeight: '1.5' }}>
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: '1rem', lineHeight: '1.5' }}>
                             You already have access to all premium features, including advanced reports and multi-business management.
                         </p>
                     </div>
                 ) : (
                     messageVariant === 1 ? (
                         <div style={{ marginBottom: '2rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '1rem', lineHeight: '1.4' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text)', marginBottom: '1rem', lineHeight: '1.4' }}>
                                 Most business owners don’t know their real profit.
                             </h2>
-                            <div style={{ textAlign: 'left', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem' }}>
-                                <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#334155' }}>DailyProfit Pro shows:</p>
-                                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: '#475569' }}>
+                            <div style={{ textAlign: 'left', backgroundColor: 'var(--color-bg-subtle)', padding: '1rem', borderRadius: '1rem' }}>
+                                <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: 'var(--color-text)' }}>DailyProfit Pro shows:</p>
+                                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'var(--color-text-muted)' }}>
                                     <li style={{ color: '#16a34a', fontWeight: '600' }}>✨ Tax Insight & Estimates</li>
                                     <li>• What you make daily</li>
                                     <li>• Full Profit History</li>
                                     <li>• How to plan better</li>
                                 </ul>
                             </div>
-                            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#94a3b8' }}>You can upgrade anytime.</p>
+                            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>You can upgrade anytime.</p>
                         </div>
                     ) : (
                         <div style={{ marginBottom: '2rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '1rem', lineHeight: '1.4' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text)', marginBottom: '1rem', lineHeight: '1.4' }}>
                                 Unlock Tax Insight & Full History
                             </h2>
-                            <div style={{ textAlign: 'left', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem' }}>
-                                <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#334155' }}>DailyProfit Pro helps you:</p>
-                                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: '#475569' }}>
+                            <div style={{ textAlign: 'left', backgroundColor: 'var(--color-bg-subtle)', padding: '1rem', borderRadius: '1rem' }}>
+                                <p style={{ fontWeight: '600', marginBottom: '0.5rem', color: 'var(--color-text)' }}>DailyProfit Pro helps you:</p>
+                                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'var(--color-text-muted)' }}>
                                     <li style={{ color: '#16a34a', fontWeight: '600' }}>🔐 Automatic Tax Estimates</li>
                                     <li>• See your full profit history</li>
                                     <li>• Track expenses & exemptions</li>
                                     <li>• Manage multiple businesses</li>
                                 </ul>
                             </div>
-                            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#94a3b8' }}>Upgrade when you’re ready.</p>
+                            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Upgrade when you’re ready.</p>
                         </div>
                     )
                 )}

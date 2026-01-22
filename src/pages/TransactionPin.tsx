@@ -62,7 +62,7 @@ export function TransactionPin() {
                         Protect your sales history and sensitive settings with a 4-digit security PIN.
                     </p>
 
-                    <Card padding="1rem" style={{ border: business.pin ? '1px solid #dcfce7' : '1px solid #fee2e2', backgroundColor: business.pin ? '#f0fdf4' : '#fef2f2' }}>
+                    <Card padding="1rem" style={{ border: business.pin ? '1px solid var(--color-primary)' : '1px solid var(--color-danger)', backgroundColor: business.pin ? 'var(--color-surface)' : 'var(--color-bg-subtle)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <div style={{
                                 width: '3rem', height: '3rem', borderRadius: '50%',
@@ -72,7 +72,7 @@ export function TransactionPin() {
                                 <Lock size={20} />
                             </div>
                             <div>
-                                <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '1.125rem', color: 'var(--color-text)' }}>
                                     {business.pin ? 'PIN is Active' : 'No PIN Set'}
                                 </div>
                                 <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
@@ -88,7 +88,7 @@ export function TransactionPin() {
                             onClick={() => handleAction('create')}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start',
-                                padding: '1.25rem', backgroundColor: business.pin ? '#f1f5f9' : 'var(--color-primary)',
+                                padding: '1.25rem', backgroundColor: business.pin ? 'var(--color-bg-subtle)' : 'var(--color-primary)',
                                 color: business.pin ? '#94a3b8' : 'white', cursor: business.pin ? 'not-allowed' : 'pointer'
                             }}
                         >
@@ -101,7 +101,7 @@ export function TransactionPin() {
                                     onClick={() => handleAction('reset')}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start',
-                                        padding: '1.25rem', backgroundColor: 'white', color: 'var(--color-text)', border: '1px solid var(--color-border)'
+                                        padding: '1.25rem', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)'
                                     }}
                                 >
                                     <RotateCcw size={20} /> Reset PIN
@@ -111,7 +111,7 @@ export function TransactionPin() {
                                     onClick={() => handleAction('remove')}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start',
-                                        padding: '1.25rem', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fee2e2'
+                                        padding: '1.25rem', backgroundColor: 'var(--color-bg-subtle)', color: '#dc2626', border: '1px solid #fee2e2'
                                     }}
                                 >
                                     <Trash2 size={20} /> Remove PIN

@@ -4,14 +4,16 @@ import { useData } from '../context/DataContext';
 import { Layout } from '../components/layout/Layout';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ChevronLeft, Check, Calculator } from 'lucide-react';
+import { ChevronLeft, Check, Calculator, ShoppingBag } from 'lucide-react';
 import { formatCurrency, formatNumberAsYouType } from '../utils/format';
 
 export function CustomSale() {
     const navigate = useNavigate();
-    const { business, addSale } = useData();
+    const { business, addSale, addToBucket } = useData();
 
     // Form State
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [name, setName] = useState('');
     const [costPrice, setCostPrice] = useState('');
     const [sellingPrice, setSellingPrice] = useState('');
@@ -34,41 +36,47 @@ export function CustomSale() {
         };
     }, [quantity, sellingPrice, costPrice]);
 
-    const handleSave = () => {
-        if (!name.trim() || !sellingPrice) return;
+    const handleSave = async () => {
+        if (!name.trim() || !sellingPrice || isSubmitting) return;
 
-        // Date Logic (Same as AddSale)
-        const todayLocal = new Date().toLocaleDateString('en-CA');
-        let finalDate = date;
+        try {
+            setIsSubmitting(true);
+            // Date Logic (Same as AddSale)
+            const todayLocal = new Date().toLocaleDateString('en-CA');
+            let finalDate = date;
 
-        if (date === todayLocal) {
-            const now = new Date();
-            const offsetMs = now.getTimezoneOffset() * 60000;
-            const localDate = new Date(now.getTime() - offsetMs);
-            finalDate = localDate.toISOString().slice(0, 19);
-        } else {
-            finalDate = date;
+            if (date === todayLocal) {
+                const now = new Date();
+                const offsetMs = now.getTimezoneOffset() * 60000;
+                const localDate = new Date(now.getTime() - offsetMs);
+                finalDate = localDate.toISOString().slice(0, 19);
+            } else {
+                finalDate = date;
+            }
+
+            // Append unit if present
+            const finalName = unit.trim() ? `${name.trim()} (${unit.trim()})` : name.trim();
+
+            // Generate a temporary ID that won't collide with real products
+            // We use a prefix 'custom_' timestamp
+            const randomId = `custom_${Date.now()}`;
+
+            addSale({
+                businessId: business.id,
+                productId: randomId,
+                productName: finalName,
+                quantity: parseFloat(quantity) || 1,
+                revenue: calculations.revenue,
+                cost: calculations.cost,
+                profit: calculations.profit,
+                date: finalDate
+            }).catch(e => console.error("Background Custom Sale Failed", e));
+
+            navigate('/');
+        } catch (error) {
+            console.error("Custom Sale Failed", error);
+            setIsSubmitting(false);
         }
-
-        // Append unit if present
-        const finalName = unit.trim() ? `${name.trim()} (${unit.trim()})` : name.trim();
-
-        // Generate a temporary ID that won't collide with real products
-        // We use a prefix 'custom_' timestamp
-        const randomId = `custom_${Date.now()}`;
-
-        addSale({
-            businessId: business.id,
-            productId: randomId,
-            productName: finalName,
-            quantity: parseFloat(quantity) || 1,
-            revenue: calculations.revenue,
-            cost: calculations.cost,
-            profit: calculations.profit,
-            date: finalDate
-        });
-
-        navigate('/');
     };
 
     return (
@@ -181,13 +189,38 @@ export function CustomSale() {
                         </div>
                     </div>
 
-                    <Button
-                        disabled={!name.trim() || !sellingPrice}
-                        onClick={handleSave}
-                        style={{ padding: '1rem', fontSize: '1.125rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
-                    >
-                        <Check size={20} /> Confirm Custom Sale
-                    </Button>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <Button
+                            disabled={!name.trim() || !sellingPrice}
+                            onClick={() => {
+                                // Add to Bucket Logic
+                                const finalName = unit.trim() ? `${name.trim()} (${unit.trim()})` : name.trim();
+                                const randomId = `custom_${Date.now()}`;
+                                const price = parseFloat(sellingPrice.replace(/,/g, '')) || 0;
+                                const cost = parseFloat(costPrice.replace(/,/g, '')) || 0;
+
+                                addToBucket({
+                                    productId: randomId,
+                                    productName: finalName,
+                                    quantity: parseFloat(quantity) || 1,
+                                    sellingPrice: price,
+                                    costPrice: cost
+                                });
+                                navigate('/add-sale', { state: { step: 'bucket' } });
+                            }}
+                            variant="secondary"
+                            style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                            <ShoppingBag size={20} /> Add to Bucket
+                        </Button>
+                        <Button
+                            disabled={!name.trim() || !sellingPrice || isSubmitting}
+                            onClick={handleSave}
+                            style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', backgroundColor: '#9333ea', color: 'white', border: 'none', opacity: isSubmitting ? 0.7 : 1 }}
+                        >
+                            <Check size={20} /> {isSubmitting ? 'Processing...' : 'Quick Sell'}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </Layout>

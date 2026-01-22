@@ -213,7 +213,7 @@ export function AddEditProduct() {
                                 padding: '0.75rem',
                                 borderRadius: '0.75rem',
                                 border: '1px solid var(--color-border)',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--color-surface)',
                                 fontSize: '1rem',
                                 outline: 'none'
                             }}

@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.profittracker.app',
-  appName: 'DailyProfit',
+  appId: 'com.brimarcglobal.dailyprofit',
+  appName: 'Daily Profit',
   webDir: 'dist',
   plugins: {
     StatusBar: {
@@ -25,6 +25,12 @@ const config: CapacitorConfig = {
     androidScheme: 'http', // CRITICAL: Allow HTTP to avoid Mixed Content errors with http API
     cleartext: true,
     allowNavigation: ['*', 'http://192.168.1.181:3001', 'http://10.0.2.2:3001', 'http://localhost:3001']
+  },
+  ios: {
+    contentInset: 'never', // CRITICAL: Force Edge-to-Edge (Webview draws behind safe area)
+    allowsBackForwardNavigationGestures: true,
+    scrollEnabled: true,
+    backgroundColor: '#ffffff' // Hides black bars during overscroll/resize
   }
 };
 

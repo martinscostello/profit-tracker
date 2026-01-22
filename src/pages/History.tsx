@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
 import { formatCurrency, formatDate } from '../utils/format';
+import { getStartOfWeek, getStartOfMonth } from '../utils/dateUtils';
 import { Filter, Calendar, Edit2, Lock, FileText, ChevronDown } from 'lucide-react';
 import { PinModal } from '../components/ui/PinModal';
 import { EditSaleModal } from '../components/ui/EditSaleModal';
@@ -43,13 +44,16 @@ export function SalesHistory() {
                 const now = new Date();
                 return saleDateObj.toDateString() === now.toDateString();
             } else if (filter === 'week') {
-                const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                return saleDate >= weekAgo;
+                const startOfWeek = getStartOfWeek(now);
+                return saleDate >= startOfWeek;
             } else if (filter === 'month') {
-                return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+                const startOfMonth = getStartOfMonth(now);
+                return saleDate >= startOfMonth;
             } else if (filter === 'custom' && dateRange.start && dateRange.end) {
                 const start = new Date(dateRange.start);
                 const end = new Date(dateRange.end);
+                // Fix: Set end date to end of day to include transactions on that day
+                end.setHours(23, 59, 59, 999);
                 return saleDate >= start && saleDate <= end;
             }
             return true;
@@ -110,20 +114,28 @@ export function SalesHistory() {
             }}>
                 {/* Fixed Header Section */}
                 <div style={{
-                    paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
-                    padding: '1.5rem',
+                    padding: '1.5rem', // Base padding
+                    paddingTop: 'calc(var(--header-top-spacing) + env(safe-area-inset-top))', // Override top only
                     paddingBottom: '0.5rem',
                     backgroundColor: 'var(--color-bg)',
                     zIndex: 10,
                     flexShrink: 0
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>History</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <button onClick={() => window.history.back()} style={{
+                                background: 'none', border: 'none', padding: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <ChevronDown size={24} style={{ transform: 'rotate(90deg)', color: 'var(--color-text)' }} />
+                            </button>
+                            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>History</h1>
+                        </div>
                         <button
                             onClick={handleDateRangeClick}
                             style={{
                                 padding: '0.5rem 0.75rem',
-                                backgroundColor: filter === 'custom' ? '#f3e8ff' : 'white',
+                                backgroundColor: filter === 'custom' ? '#f3e8ff' : 'var(--color-surface)',
                                 border: `1px solid ${filter === 'custom' ? '#9333ea' : 'var(--color-border)'}`,
                                 borderRadius: '0.5rem',
                                 display: 'flex', alignItems: 'center', gap: '0.5rem',

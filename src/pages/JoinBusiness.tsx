@@ -216,7 +216,8 @@ export function JoinBusiness() {
                                         width: '3rem', height: '3.5rem',
                                         fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center',
                                         borderRadius: '0.75rem', border: '1px solid var(--color-border)',
-                                        backgroundColor: 'white'
+                                        backgroundColor: 'var(--color-surface)',
+                                        color: 'var(--color-text)'
                                     }}
                                 />
                             ))}
@@ -260,7 +261,7 @@ export function JoinBusiness() {
                         onClick={stopScan}
                         style={{
                             padding: '1rem 2rem', borderRadius: '2rem',
-                            backgroundColor: 'white', color: 'red', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            backgroundColor: 'var(--color-surface)', color: 'red', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                             fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem'
                         }}
                     >

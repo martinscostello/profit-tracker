@@ -93,7 +93,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             if (e.target === e.currentTarget) onClose();
         }}>
             <div style={{
-                backgroundColor: 'white', width: '100%', maxWidth: '400px',
+                backgroundColor: 'var(--color-surface)', width: '100%', maxWidth: '400px',
                 borderRadius: '1.5rem', padding: '1.5rem',
                 animation: 'scaleUp 0.2s ease-out'
             }}>
@@ -145,14 +145,14 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
                                 if (isLimitReached) {
                                     return (
-                                        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '1rem', border: '1px dashed #e2e8f0' }}>
+                                        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '1rem', border: '1px dashed #e2e8f0' }}>
                                             <div style={{ marginBottom: '1rem', color: '#f59e0b', display: 'flex', justifyContent: 'center' }}>
                                                 <AlertTriangle size={36} />
                                             </div>
-                                            <h4 style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
+                                            <h4 style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--color-text)' }}>
                                                 {limit === 0 ? "Unlock Team Access" : "Manager Limit Reached"}
                                             </h4>
-                                            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
                                                 {limit === 0
                                                     ? "Upgrade to the Entrepreneur plan to start adding managers to your business."
                                                     : `You've reached the limit of ${limit} managers on your current plan.`
@@ -177,15 +177,15 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
                                 return (
                                     <>
-                                        <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+                                        <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
                                             Share this pairing code with your partner to add them to this business.
                                         </p>
                                         <div style={{
-                                            backgroundColor: '#f8fafc', padding: '2rem', borderRadius: '1rem',
+                                            backgroundColor: 'var(--color-bg-subtle)', padding: '2rem', borderRadius: '1rem',
                                             border: '2px dashed #94a3b8', marginBottom: '1rem',
                                             position: 'relative'
                                         }}>
-                                            <div style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.5rem', color: pairingCode === 'Error' ? '#ef4444' : '#1e293b' }}>
+                                            <div style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.5rem', color: pairingCode === 'Error' ? '#ef4444' : 'var(--color-text)' }}>
                                                 {pairingCode}
                                             </div>
                                             {errorMsg && (
@@ -211,7 +211,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                                 style={{
                                                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                                                     padding: '0.75rem 1.5rem', borderRadius: '0.75rem',
-                                                    backgroundColor: '#f1f5f9', color: '#475569',
+                                                    backgroundColor: 'var(--color-bg-subtle)', color: 'var(--color-text-muted)',
                                                     border: 'none', fontWeight: '600',
                                                     opacity: pairingCode === '...' ? 0.5 : 1
                                                 }}
@@ -224,7 +224,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                                 style={{
                                                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                                                     padding: '0.75rem 1.5rem', borderRadius: '0.75rem',
-                                                    backgroundColor: '#f1f5f9', color: '#475569',
+                                                    backgroundColor: 'var(--color-bg-subtle)', color: 'var(--color-text-muted)',
                                                     border: 'none', fontWeight: '600',
                                                     opacity: isLoading ? 0.5 : 1
                                                 }}
@@ -260,7 +260,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                     ) : (
                         pairingCode !== '...' && pairingCode !== 'Error' && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                                <div style={{ background: 'white', padding: '1rem', borderRadius: '1rem', border: '2px solid #e2e8f0' }}>
+                                <div style={{ background: 'var(--color-surface)', padding: '1rem', borderRadius: '1rem', border: '2px solid #e2e8f0' }}>
                                     <QRCode value={pairingCode} size={150} />
                                 </div>
                                 <button onClick={() => setShowQr(false)} style={{ color: '#64748b', fontSize: '0.875rem', background: 'none', border: 'none', textDecoration: 'underline' }}>

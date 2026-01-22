@@ -13,7 +13,6 @@ export function Screen2_Setup({ onNext }: Props) {
     const stored: Partial<TaxSettings> = business.taxSettings || {};
 
     const [businessType, setBusinessType] = useState<TaxSettings['businessType']>(stored.businessType || 'SOLO');
-    const [hasExemptItems, setHasExemptItems] = useState<TaxSettings['hasExemptItems']>(stored.hasExemptItems || 'IDK');
     const [loading, setLoading] = useState(false);
     const [showBusinessMenu, setShowBusinessMenu] = useState(false);
     const [showCalculation, setShowCalculation] = useState(false);
@@ -36,17 +35,13 @@ export function Screen2_Setup({ onNext }: Props) {
         if (business.taxSettings?.businessType) {
             setBusinessType(business.taxSettings.businessType);
         }
-        if (business.taxSettings?.hasExemptItems) {
-            setHasExemptItems(business.taxSettings.hasExemptItems);
-        }
 
     }, [business.id]); // Run when business changes
 
     const handleSave = async () => {
         setLoading(true);
         await updateTaxSettings({
-            businessType,
-            hasExemptItems
+            businessType
         });
         // Fake calculation delay starts now
         setLoading(false);
@@ -66,8 +61,8 @@ export function Screen2_Setup({ onNext }: Props) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '1.25rem',
-                backgroundColor: 'white',
-                border: selected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                backgroundColor: 'var(--color-surface)',
+                border: selected ? '2px solid #2563eb' : '1px solid var(--color-border)',
                 borderRadius: '1rem',
                 marginBottom: '0.75rem',
                 cursor: 'pointer',
@@ -108,8 +103,8 @@ export function Screen2_Setup({ onNext }: Props) {
                             width: '100%',
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             padding: '1rem',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
+                            backgroundColor: 'var(--color-bg-subtle)',
+                            border: '1px solid var(--color-border)',
                             borderRadius: '1rem',
                             fontWeight: '600',
                             color: '#0f172a' // Hardcoded dark slate for visibility
@@ -143,9 +138,9 @@ export function Screen2_Setup({ onNext }: Props) {
                                         width: '100%',
                                         display: 'flex', alignItems: 'center', gap: '0.75rem',
                                         padding: '1rem',
-                                        borderBottom: '1px solid #f1f5f9',
+                                        borderBottom: '1px solid var(--color-border)',
                                         textAlign: 'left',
-                                        backgroundColor: b.id === business.id ? '#f0fdf4' : 'white'
+                                        backgroundColor: b.id === business.id ? '#f0fdf4' : 'var(--color-surface)'
                                     }}
                                 >
                                     <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', backgroundColor: b.id === business.id ? '#dcfce7' : '#f1f5f9', color: b.id === business.id ? '#16a34a' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
@@ -189,38 +184,45 @@ export function Screen2_Setup({ onNext }: Props) {
                 />
             </div>
 
-            {/* 2. Exempt Items */}
+            {/* 2. Exempt Items Info (Auto-Scan) */}
             <div style={{ marginBottom: '2rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--color-text)' }}>
-                    Do you sell items that are tax-exempt?
+                    Tax Exempt Items
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-                    Tax-exempt items include: basic food items, agricultural produce, medical supplies, educational materials
-                </p>
-
-                <RadioCard
-                    label="Yes"
-                    selected={hasExemptItems === 'YES'}
-                    onClick={() => setHasExemptItems('YES')}
-                />
-                <RadioCard
-                    label="No"
-                    selected={hasExemptItems === 'NO'}
-                    onClick={() => setHasExemptItems('NO')}
-                />
-                <RadioCard
-                    label="I don't know"
-                    selected={hasExemptItems === 'IDK'}
-                    onClick={() => setHasExemptItems('IDK')}
-                />
+                <div style={{
+                    backgroundColor: '#f0fdf4',
+                    padding: '1.25rem',
+                    borderRadius: '1rem',
+                    border: '1px solid #bbf7d0'
+                }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <div style={{ minWidth: '1.5rem', height: '1.5rem', borderRadius: '50%', backgroundColor: '#16a34a', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>✓</div>
+                        <div style={{ fontWeight: '600', color: '#15803d' }}>Automatic Scanning Active</div>
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: '#166534', lineHeight: '1.5' }}>
+                        Your products will be automatically scanned for tax exempt items. These include:
+                    </p>
+                    <ul style={{
+                        marginTop: '0.5rem',
+                        paddingLeft: '1.5rem',
+                        fontSize: '0.85rem',
+                        color: '#166534',
+                        display: 'flex', flexDirection: 'column', gap: '0.25rem'
+                    }}>
+                        <li>Basic food items (Rice, Garri, Yam, Beans, etc.)</li>
+                        <li>Medical supplies & Drugs</li>
+                        <li>Educational materials (Books)</li>
+                        <li>Agricultural produce</li>
+                    </ul>
+                </div>
             </div>
 
             {/* Fixed Bottom Button - Raised Higher for Visibility */}
             <div style={{
                 position: 'fixed', bottom: '0', left: 0, right: 0,
                 padding: '1rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
-                backgroundColor: 'white',
-                borderTop: '1px solid #f1f5f9',
+                backgroundColor: 'var(--color-surface)',
+                borderTop: '1px solid var(--color-border)',
                 maxWidth: '600px', margin: '0 auto',
                 zIndex: 999 // Super high z-index to ensure visibility
             }}>

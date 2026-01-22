@@ -71,7 +71,7 @@ export function EditCollaboratorModal({ businessId, collaborator, isOpen, onClos
             paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))'
         }}>
             <div style={{
-                backgroundColor: 'white', borderRadius: '1rem',
+                backgroundColor: 'var(--color-surface)', borderRadius: '1rem',
                 width: '100%', maxWidth: '500px',
                 maxHeight: '85vh',
                 display: 'flex', flexDirection: 'column',

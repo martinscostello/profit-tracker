@@ -48,17 +48,17 @@ export function Screen3_Summary() {
                     </h3>
                     <Card padding="0">
                         {result.taxableItems.length > 0 ? result.taxableItems.map((item, i) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
                                 <div>
                                     <div style={{ fontWeight: '600' }}>{item.name}</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.reason}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{item.reason}</div>
                                 </div>
                                 <div style={{ fontWeight: '600' }}>{formatCurrency(item.amount)}</div>
                             </div>
                         )) : (
-                            <div style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center' }}>No taxable items found</div>
+                            <div style={{ padding: '1rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>No taxable items found</div>
                         )}
-                        <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                        <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-subtle)', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
                             <span>Total Taxable</span>
                             <span>{formatCurrency(result.taxableSales)}</span>
                         </div>
@@ -71,23 +71,23 @@ export function Screen3_Summary() {
                         <div style={{ width: '0.5rem', height: '0.5rem', backgroundColor: '#f97316', borderRadius: '50%' }} />
                         Tax-Exempt Items
                     </h3>
-                    <div style={{ marginBottom: '1rem', fontSize: '0.85rem', color: '#64748b', padding: '0.75rem', backgroundColor: '#fff7ed', borderRadius: '0.5rem' }}>
+                    <div style={{ marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', padding: '0.75rem', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '0.5rem' }}>
                         Running a grocery or pharmacy? Items like food and medicine are exempt from VAT under Nigerian law.
                     </div>
                     <Card padding="0">
                         {result.exemptItems.map((item, i) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
                                 <div>
                                     <div style={{ fontWeight: '600' }}>{item.name}</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.reason}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{item.reason}</div>
                                 </div>
                                 <div style={{ fontWeight: '600' }}>{formatCurrency(item.amount)}</div>
                             </div>
                         ))}
                         {result.exemptItems.length === 0 && (
-                            <div style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center' }}>No exempt items found</div>
+                            <div style={{ padding: '1rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>No exempt items found</div>
                         )}
-                        <div style={{ padding: '1rem', backgroundColor: '#fff7ed', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                        <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-subtle)', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
                             <span>Total Exempt</span>
                             <span>{formatCurrency(result.exemptSales)}</span>
                         </div>
@@ -106,8 +106,8 @@ export function Screen3_Summary() {
                     onClick={() => setPeriod('MONTH')}
                     style={{
                         flex: 1, padding: '0.6rem', borderRadius: '0.75rem', fontSize: '0.9rem', fontWeight: '600',
-                        backgroundColor: period === 'MONTH' ? '#2563eb' : '#f1f5f9',
-                        color: period === 'MONTH' ? 'white' : '#64748b'
+                        backgroundColor: period === 'MONTH' ? 'var(--color-primary)' : 'var(--color-bg-subtle)',
+                        color: period === 'MONTH' ? 'white' : 'var(--color-text-muted)'
                     }}
                 >
                     All Time
@@ -178,11 +178,11 @@ export function Screen3_Summary() {
 
             {/* Orange/Slate Estimate Card: ACCUMULATED (Income Tax) */}
             <div style={{
-                backgroundColor: '#f8fafc',
+                backgroundColor: 'var(--color-bg-subtle)',
                 borderRadius: '1.5rem',
                 padding: '1.5rem',
                 marginBottom: '1.5rem',
-                border: '1px solid #e2e8f0'
+                border: '1px solid var(--color-border)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div style={{ padding: '0.5rem', backgroundColor: '#fff7ed', borderRadius: '0.5rem', color: '#ea580c' }}>
@@ -196,10 +196,10 @@ export function Screen3_Summary() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
                     <div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text)' }}>
                             {formatCurrency(result.incomeTaxAmount)}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                             {result.taxType === 'CIT' ? 'Company Income Tax' : 'Personal Income Tax'}
                         </div>
                     </div>
@@ -211,7 +211,7 @@ export function Screen3_Summary() {
                     )}
                 </div>
 
-                <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4' }}>
+                <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
                     {result.message}
                 </div>
             </div>
@@ -249,7 +249,7 @@ export function Screen3_Summary() {
             {/* Revenue Breakdown */}
             <Card padding="1.5rem" style={{ marginBottom: '2rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Revenue Breakdown</h3>
-                <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
                     All Time Data — {sales.length} Sales & {expenses.length} Expenses
                 </p>
 
@@ -259,13 +259,13 @@ export function Screen3_Summary() {
                 </div>
 
                 {/* Visual Formula */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid #e2e8f0', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--color-border)', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                        <span style={{ color: '#64748b' }}>➖ Exempt Sales (No VAT)</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>➖ Exempt Sales (No VAT)</span>
                         <span style={{ color: '#f97316' }}>{formatCurrency(result.exemptSales)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                        <span style={{ color: '#64748b' }}>= Taxable Sales Base</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>= Taxable Sales Base</span>
                         <span style={{ fontWeight: '600' }}>{formatCurrency(result.taxableSales)}</span>
                     </div>
                 </div>
@@ -288,8 +288,8 @@ export function Screen3_Summary() {
                     style={{
                         width: '100%',
                         padding: '0.75rem',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--color-bg-subtle)',
+                        border: '1px solid var(--color-border)',
                         borderRadius: '0.75rem',
                         color: 'var(--color-text)',
                         fontWeight: '600',
@@ -325,13 +325,13 @@ export function Screen3_Summary() {
             </Card>
 
             <div style={{
-                backgroundColor: '#f1f5f9',
+                backgroundColor: 'var(--color-bg-subtle)',
                 padding: '1rem',
                 borderRadius: '1rem',
                 marginBottom: '1rem',
                 textAlign: 'center'
             }}>
-                <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: '1.4' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
                     This is an estimate for guidance. For official filing and payment, please consult a tax professional or contact FIRS.
                 </p>
             </div>

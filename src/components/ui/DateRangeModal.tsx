@@ -34,13 +34,13 @@ export function DateRangeModal({ isOpen, onClose, onApply }: DateRangeModalProps
 
     return (
         <div style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
+            position: 'fixed', inset: 0, zIndex: 10005,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.5)',
             backdropFilter: 'blur(4px)'
         }}>
             <div style={{
-                backgroundColor: 'white', width: '90%', maxWidth: '400px',
+                backgroundColor: 'var(--color-surface)', width: '90%', maxWidth: '400px',
                 borderRadius: '1.5rem', padding: '1.5rem',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                 animation: 'scaleIn 0.2s ease-out'

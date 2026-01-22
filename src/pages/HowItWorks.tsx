@@ -89,7 +89,7 @@ export function HowItWorks() {
                                 key={idx}
                                 onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                                 style={{
-                                    backgroundColor: 'white',
+                                    backgroundColor: 'var(--color-surface)',
                                     borderRadius: '0.75rem',
                                     border: '1px solid var(--color-border)',
                                     overflow: 'hidden'

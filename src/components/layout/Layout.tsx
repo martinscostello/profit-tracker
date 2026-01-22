@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { BottomNav } from './BottomNav';
+import { OnboardingGuide } from '../ui/OnboardingGuide';
 import { usePermissions } from '../../hooks/usePermissions';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+import { SwipeBackHandler } from '../logic/SwipeBackHandler';
 
 export function Layout({ children, showNav = true, disablePadding = false, ignoreLock = false }: { children: ReactNode; showNav?: boolean; disablePadding?: boolean; ignoreLock?: boolean }) {
     const { role } = usePermissions();
@@ -65,14 +68,27 @@ export function Layout({ children, showNav = true, disablePadding = false, ignor
 
     return (
         <div style={{
-            minHeight: '100vh',
+            height: '100%', // Full native height
+            display: 'flex',
+            flexDirection: 'column',
             backgroundColor: 'var(--color-bg)',
-            paddingBottom: showNav && !disablePadding ? '5rem' : '0'
+            overflow: 'hidden' // No outer scroll
         }}>
-            <main>
+            <SwipeBackHandler />
+            {/* Scrollable Content Area */}
+            <main style={{
+                flex: 1,
+                overflowY: disablePadding ? 'hidden' : 'auto', // Dashboard handles its own scroll, others scroll here
+                overflowX: 'hidden',
+                position: 'relative', // Context for sticky headers
+                paddingBottom: showNav && !disablePadding ? '5rem' : '0',
+                overscrollBehaviorY: 'none' // Prevent bounce on list end
+            }}>
                 {children}
             </main>
+
             {showNav && <BottomNav />}
+            <OnboardingGuide />
         </div>
     );
 }

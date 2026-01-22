@@ -62,8 +62,6 @@ export interface Collaborator {
 
 export interface TaxSettings {
     businessType: 'SOLO' | 'REGISTERED' | 'LIMITED';
-    hasExemptItems: 'YES' | 'NO' | 'IDK';
-    checkExemptItems?: boolean; // Derived from hasExemptItems
 }
 export type SubscriptionPlan = 'FREE' | 'LITE' | 'ENTREPRENEUR' | 'UNLIMITED';
 

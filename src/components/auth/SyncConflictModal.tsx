@@ -99,7 +99,7 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                                         padding: '1rem',
                                         borderRadius: '0.75rem',
                                         border: `2px solid ${isSelected ? '#3B82F6' : '#E5E7EB'}`,
-                                        backgroundColor: isSelected ? '#EFF6FF' : 'white',
+                                        backgroundColor: isSelected ? '#EFF6FF' : 'var(--color-surface)',
                                         cursor: 'pointer',
                                         display: 'flex', alignItems: 'center', gap: '1rem',
                                         transition: 'all 0.2s', flexShrink: 0
@@ -130,8 +130,8 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                 </div>
 
                 {/* Footer - Fixed */}
-                <div style={{ padding: '1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexShrink: 0, backgroundColor: 'white', borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }}>
-                    <Button onClick={onClose} style={{ backgroundColor: 'white', border: '1px solid #D1D5DB', color: '#374151' }}>Cancel</Button>
+                <div style={{ padding: '1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexShrink: 0, backgroundColor: 'var(--color-surface)', borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }}>
+                    <Button onClick={onClose} style={{ backgroundColor: 'var(--color-surface)', border: '1px solid #D1D5DB', color: '#374151' }}>Cancel</Button>
                     <Button
                         disabled={selectedIds.length === 0}
                         onClick={() => {
@@ -175,7 +175,7 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                                         style={{
                                             padding: '0.75rem', borderRadius: '0.5rem',
                                             border: `2px solid ${decision === 'MERGE' ? '#3B82F6' : '#E5E7EB'}`,
-                                            backgroundColor: decision === 'MERGE' ? '#EFF6FF' : 'white',
+                                            backgroundColor: decision === 'MERGE' ? '#EFF6FF' : 'var(--color-surface)',
                                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem'
                                         }}>
                                         <GitMerge size={18} />
@@ -190,7 +190,7 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                                         style={{
                                             padding: '0.75rem', borderRadius: '0.5rem',
                                             border: `2px solid ${decision === 'REPLACE' ? '#3B82F6' : '#E5E7EB'}`,
-                                            backgroundColor: decision === 'REPLACE' ? '#EFF6FF' : 'white',
+                                            backgroundColor: decision === 'REPLACE' ? '#EFF6FF' : 'var(--color-surface)',
                                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem'
                                         }}>
                                         <RefreshCw size={18} />
@@ -205,7 +205,7 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                                         style={{
                                             padding: '0.75rem', borderRadius: '0.5rem',
                                             border: `2px solid ${decision === 'KEEP_SEPARATE' ? '#3B82F6' : '#E5E7EB'}`,
-                                            backgroundColor: decision === 'KEEP_SEPARATE' ? '#EFF6FF' : 'white',
+                                            backgroundColor: decision === 'KEEP_SEPARATE' ? '#EFF6FF' : 'var(--color-surface)',
                                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem'
                                         }}>
                                         <Copy size={18} />
@@ -220,8 +220,8 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
                     })}
                 </div>
 
-                <div style={{ padding: '1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexShrink: 0, backgroundColor: 'white', borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }}>
-                    <Button onClick={onClose} style={{ backgroundColor: 'white', border: '1px solid #D1D5DB', color: '#374151' }}>Cancel</Button>
+                <div style={{ padding: '1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexShrink: 0, backgroundColor: 'var(--color-surface)', borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }}>
+                    <Button onClick={onClose} style={{ backgroundColor: 'var(--color-surface)', border: '1px solid #D1D5DB', color: '#374151' }}>Cancel</Button>
                     <Button onClick={() => onResolve(resolutions)}>
                         Confirm Choices
                     </Button>
@@ -238,7 +238,7 @@ export function SyncConflictModal({ isOpen, onClose, type, limit, businesses, cl
             padding: '1rem'
         }}>
             <div style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-surface)',
                 borderRadius: '1rem',
                 width: '100%', maxWidth: '500px',
                 height: 'auto',

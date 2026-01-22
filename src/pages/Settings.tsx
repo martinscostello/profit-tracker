@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
-import { User, Crown, HelpCircle, FileText, Database, ChevronRight, Lock, DollarSign, Calculator, Receipt, Building2, Bell, LogOut } from 'lucide-react';
+import { User, Crown, HelpCircle, FileText, Database, ChevronRight, Lock, DollarSign, Calculator, Receipt, Building2, Bell, LogOut, Moon } from 'lucide-react';
 import { UpgradeModal } from '../components/ui/UpgradeModal';
 import { CurrencyModal } from '../components/ui/CurrencyModal';
 import { useNavigate } from 'react-router-dom';
@@ -132,6 +132,14 @@ export function Settings() {
                     action: true,
                     iconColor: '#F97316',
                     onClick: () => navigate('/notifications/settings')
+                },
+                {
+                    icon: Moon,
+                    label: 'Appearance',
+                    sub: 'Dark Mode & Theme',
+                    action: true,
+                    iconColor: '#64748b', // Slate
+                    onClick: () => navigate('/settings/appearance')
                 }
             ]
         },
@@ -224,7 +232,7 @@ export function Settings() {
                     top: 0,
                     backgroundColor: 'var(--color-bg)',
                     zIndex: 20,
-                    paddingTop: 'calc(3rem + env(safe-area-inset-top))',
+                    paddingTop: 'calc(var(--header-top-spacing) + env(safe-area-inset-top))',
                     paddingBottom: '1rem',
                     paddingLeft: '1.5rem',
                     paddingRight: '1.5rem',
@@ -234,9 +242,19 @@ export function Settings() {
                     justifyContent: 'space-between',
                     alignItems: 'center'
                 }}>
-                    <div>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Settings</h1>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{business.name || 'My Business'}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Back Button (Only visible if history > 1, but we force it for native feel if requested) */}
+                        <button onClick={() => navigate(-1)} style={{
+                            background: 'none', border: 'none', padding: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <ChevronRight size={24} style={{ transform: 'rotate(180deg)', color: 'var(--color-text)' }} />
+                        </button>
+
+                        <div>
+                            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Settings</h1>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{business.name || 'My Business'}</p>
+                        </div>
                     </div>
                     <NotificationBell />
                 </div>

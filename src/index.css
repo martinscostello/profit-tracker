@@ -1,18 +1,19 @@
 :root {
   /* Light Mode Palette - Figma Inspired */
   --color-bg: #ffffff;
-  /* pure white as requested */
   --color-surface: #ffffff;
   --color-primary: #16A34A;
-  /* Exact Match */
+  --color-primary-light: #dcfce7;
+  /* green-100 */
   --color-primary-hover: #15803d;
-  /* darker green */
   --color-text: #0f172a;
-  /* slate-900 */
   --color-text-muted: #64748b;
-  /* slate-500 */
   --color-border: #e2e8f0;
-  /* slate-200 */
+
+  --color-bg-subtle: #f8fafc;
+  --color-input-bg: #f8fafc;
+  --color-danger: #ef4444;
+
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -20,6 +21,56 @@
   --radius-lg: 0.75rem;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Layout Spacing Variables */
+  --header-top-spacing: 2rem;
+  /* Default (Android) */
+  --nav-bottom-spacing: 0.5rem;
+  /* Default (Android) */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode Palette - Slate Inspired */
+    --color-bg: #0f172a;
+    /* slate-900 */
+    --color-surface: #1e293b;
+    /* slate-800 */
+    --color-text: #f8fafc;
+    /* slate-50 */
+    --color-text-muted: #94a3b8;
+    /* slate-400 */
+    --color-border: #334155;
+    /* slate-700 */
+    --color-primary: #22c55e;
+    /* Green-500 (Brighter for dark mode) */
+    --color-primary-light: rgba(34, 197, 94, 0.1);
+
+    --color-bg-subtle: #1e293b;
+    --color-input-bg: #334155;
+    --color-danger: #ef4444;
+    /* Red-500 */
+  }
+}
+
+/* Include class support just in case */
+:root.dark {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+  --color-primary: #22c55e;
+  --color-primary-light: rgba(34, 197, 94, 0.1);
+  --color-bg-subtle: #1e293b;
+  --color-input-bg: #334155;
+  --color-danger: #ef4444;
+}
+
+body.ios {
+  /* iOS Specific: Tighter spacing because Safe Area handles the rest */
+  --header-top-spacing: 1.25rem;
+  --nav-bottom-spacing: 0rem;
 }
 
 *,
@@ -38,9 +89,11 @@ body {
   font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  /* Prevent horizontal scrolling */
+  overflow: hidden;
+  /* Lock the viewport to prevent rubber-banding */
   width: 100%;
+  height: 100%;
+  /* Ensure full height */
   margin: 0;
   padding: 0;
   user-select: none;
@@ -54,8 +107,13 @@ textarea {
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
+  display: flex;
   flex-direction: column;
+  overflow: hidden;
+  /* CRITICAL: The root must not scroll */
+  isolation: isolate;
+  /* Create new stacking context */
 }
 
 button {

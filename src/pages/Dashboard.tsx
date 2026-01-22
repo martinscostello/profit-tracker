@@ -3,10 +3,12 @@ import { useData } from '../context/DataContext';
 import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
 import { formatCurrency } from '../utils/format';
+import { getStartOfWeek, getStartOfMonth } from '../utils/dateUtils';
 import { TrendingUp, Package, ShoppingBag, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationBell } from '../components/ui/NotificationBell';
 import { BusinessSwitcher } from '../components/ui/BusinessSwitcher';
+import { BucketFAB } from '../components/ui/BucketFAB';
 import { useState } from 'react';
 
 export function Dashboard() {
@@ -26,12 +28,14 @@ export function Dashboard() {
     };
 
     // Sales History Metrics
+    // Sales History Metrics
     const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Use Calendar Week (Monday) and Month (1st)
+    const startOfWeek = getStartOfWeek(now);
+    const startOfMonth = getStartOfMonth(now);
 
     const historyMetrics = dashboardStats?.history || {
-        weekSales: sales.filter(s => new Date(s.date) >= oneWeekAgo).reduce((sum, s) => sum + s.revenue, 0),
+        weekSales: sales.filter(s => new Date(s.date) >= startOfWeek).reduce((sum, s) => sum + s.revenue, 0),
         monthSales: sales.filter(s => new Date(s.date) >= startOfMonth).reduce((sum, s) => sum + s.revenue, 0)
     };
 
@@ -101,7 +105,7 @@ export function Dashboard() {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '1.5rem',
-                paddingTop: 'calc(2rem + env(safe-area-inset-top))',
+                paddingTop: 'calc(var(--header-top-spacing) + env(safe-area-inset-top))',
                 paddingBottom: 0,
                 boxSizing: 'border-box',
                 overflow: 'hidden'
@@ -115,7 +119,9 @@ export function Dashboard() {
                                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </h1>
                         </div>
-                        <NotificationBell />
+                        <div className="notification-bell">
+                            <NotificationBell />
+                        </div>
                     </div>
 
                     {/* Main Profit Card */}
@@ -270,7 +276,7 @@ export function Dashboard() {
                                     style={{
                                         width: '100%',
                                         padding: '1rem',
-                                        backgroundColor: 'white',
+                                        backgroundColor: 'var(--color-surface)',
                                         color: 'var(--color-text)',
                                         border: '1px solid var(--color-border)',
                                         borderRadius: '0.75rem',
@@ -345,6 +351,7 @@ export function Dashboard() {
                                 position: 'sticky',
                                 top: 0,
                                 backgroundColor: 'var(--color-bg)',
+                                color: 'var(--color-text)',
                                 paddingBottom: '0.5rem',
                                 paddingTop: '0.5rem',
                                 zIndex: 10
@@ -411,6 +418,7 @@ export function Dashboard() {
                 onClose={() => setIsSwitcherOpen(false)}
                 onUpgrade={() => navigate('/upgrade')}
             />
+            <BucketFAB />
         </Layout>
     );
 }

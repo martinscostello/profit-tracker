@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { subscriptionService } from './services/SubscriptionService';
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Collaborators } from './pages/Collaborators';
 import { JoinBusiness } from './pages/JoinBusiness';
@@ -33,16 +35,19 @@ import { ExpenseAdvice } from './pages/ExpenseAdvice';
 import { AddBusiness } from './pages/AddBusiness';
 import { CustomSale } from './pages/CustomSale';
 import { UpgradePage } from './pages/UpgradePage';
+import { AppearanceSettings } from './pages/AppearanceSettings';
 
 import { Login } from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { DialogProvider } from './context/DialogContext';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function AppRoutes() {
   const { business } = useData();
+  const { isDarkMode } = useTheme();
   const [showSetup, setShowSetup] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,8 +76,14 @@ function AppRoutes() {
     const configStatusBar = async () => {
       try {
         await StatusBar.setOverlaysWebView({ overlay: true });
-        await StatusBar.setStyle({ style: Style.Light }); // Light = Dark Text
-        await StatusBar.setBackgroundColor({ color: '#ffffff' }); // Blended with white background
+
+        // In Dark Mode: Style.Dark => Light Text
+        // In Light Mode: Style.Light => Dark Text
+        const style = isDarkMode ? Style.Dark : Style.Light;
+        const color = isDarkMode ? '#0f172a' : '#ffffff';
+
+        await StatusBar.setStyle({ style });
+        await StatusBar.setBackgroundColor({ color });
       } catch (e) {
         console.warn('Status Bar not available');
       }
@@ -96,7 +107,7 @@ function AppRoutes() {
     return () => {
       backListener.then(handle => handle.remove());
     }
-  }, [navigate, location]);
+  }, [navigate, location, isDarkMode]);
 
   // Onboarding Guard: Only skip if explicitly persisted or current business is complete
   const onboardingPersisted = StorageService.load('app_onboarding_completed', false);
@@ -137,6 +148,7 @@ function AppRoutes() {
         <Route path="/settings/expense-categories" element={<ExpenseCategories />} />
         <Route path="/settings/guide" element={<HowItWorks />} />
         <Route path="/settings/contact" element={<ContactPage />} />
+        <Route path="/settings/appearance" element={<AppearanceSettings />} />
         <Route path="/collaborators" element={<Collaborators />} />
         <Route path="/join-business" element={<JoinBusiness />} />
         <Route path="/custom-sale" element={<CustomSale />} />
@@ -152,24 +164,37 @@ function App() {
     if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
       // console.warn('⚠️ VITE_GOOGLE_CLIENT_ID is missing...'); // Suppressed
     }
+
+    // Platform Detection for CSS
+    const platform = Capacitor.getPlatform(); // 'ios', 'android', or 'web'
+    document.body.classList.add(platform);
+
+    // Initialize IAP
+    subscriptionService.initialize();
+
+    return () => {
+      document.body.classList.remove(platform);
+    };
   }, []);
 
   return (
     <GoogleOAuthProvider clientId={(import.meta.env.VITE_GOOGLE_CLIENT_ID && import.meta.env.VITE_GOOGLE_CLIENT_ID !== "") ? import.meta.env.VITE_GOOGLE_CLIENT_ID : "740425791784-9fjocgu3er172e39uohspf1udq6e0are.apps.googleusercontent.com"}>
       <ErrorBoundary>
-        <ToastProvider>
-          <DialogProvider>
-            <AuthProvider>
-              <DataProvider>
-                <NotificationProvider>
-                  <HashRouter>
-                    <AppRoutes />
-                  </HashRouter>
-                </NotificationProvider>
-              </DataProvider>
-            </AuthProvider>
-          </DialogProvider>
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <DialogProvider>
+              <AuthProvider>
+                <DataProvider>
+                  <NotificationProvider>
+                    <HashRouter>
+                      <AppRoutes />
+                    </HashRouter>
+                  </NotificationProvider>
+                </DataProvider>
+              </AuthProvider>
+            </DialogProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </GoogleOAuthProvider>
   );

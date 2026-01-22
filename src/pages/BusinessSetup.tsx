@@ -55,7 +55,7 @@ export function BusinessSetup({ onComplete }: { onComplete: () => void }) {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '2rem',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-bg)',
                 paddingTop: 'calc(2rem + env(safe-area-inset-top))' // Safe area fix
             }}>
                 <div style={{ flex: 1 }}>
@@ -92,10 +92,6 @@ export function BusinessSetup({ onComplete }: { onComplete: () => void }) {
                                         padding: '0.75rem',
                                         borderRadius: '0.75rem',
                                         border: '1px solid var(--color-border)',
-                                        backgroundColor: 'white',
-                                        fontSize: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
                                         justifyContent: 'space-between',
                                         color: 'var(--color-text-primary)'
                                     }}
@@ -120,7 +116,7 @@ export function BusinessSetup({ onComplete }: { onComplete: () => void }) {
                                                     paddingRight: '2.5rem',
                                                     borderRadius: '0.75rem',
                                                     border: '1px solid var(--color-border)',
-                                                    backgroundColor: 'white',
+                                                    backgroundColor: 'var(--color-bg)',
                                                     fontSize: '1rem',
                                                     appearance: 'none',
                                                     color: type ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
@@ -129,7 +125,7 @@ export function BusinessSetup({ onComplete }: { onComplete: () => void }) {
                                             >
                                                 <option value="" disabled>Select Category</option>
                                                 {BUSINESS_TYPES.map(t => (
-                                                    <option key={t} value={t} style={{ color: 'black' }}>{t}</option>
+                                                    <option key={t} value={t} style={{ color: 'var(--color-text-primary)' }}>{t}</option>
                                                 ))}
                                             </select>
                                             <ChevronDown
@@ -171,23 +167,7 @@ export function BusinessSetup({ onComplete }: { onComplete: () => void }) {
                     </Button>
                 </div>
 
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                    <button
-                        type="button"
-                        onClick={() => window.location.hash = '#/login'}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-primary)',
-                            fontWeight: '600',
-                            fontSize: '1rem',
-                            padding: '0.5rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Already have an account? Login
-                    </button>
-                </div>
+                {/* Login link removed as requested */}
             </div>
 
             <CurrencyModal

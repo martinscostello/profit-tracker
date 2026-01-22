@@ -37,13 +37,13 @@ export function BusinessSwitcher({ isOpen, onClose }: BusinessSwitcherProps) {
             if (e.target === e.currentTarget) onClose();
         }}>
             <div style={{
-                backgroundColor: 'white', width: '100%', maxWidth: '500px',
+                backgroundColor: 'var(--color-surface)', width: '100%', maxWidth: '500px',
                 borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
                 padding: '1.5rem', paddingBottom: '7rem',
                 animation: 'slideUp 0.3s ease-out'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text)' }}>
                         Switch Business
                     </h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', padding: '0.5rem' }}>
@@ -63,9 +63,9 @@ export function BusinessSwitcher({ isOpen, onClose }: BusinessSwitcherProps) {
                                         flex: 1,
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                         padding: '1rem', borderRadius: '1rem',
-                                        backgroundColor: b.id === activeBusinessId ? '#f3e8ff' : '#f8fafc',
+                                        backgroundColor: b.id === activeBusinessId ? '#f3e8ff' : 'var(--color-bg-subtle)',
                                         border: b.id === activeBusinessId ? '2px solid #9333ea' : '1px solid #e2e8f0',
-                                        color: b.id === activeBusinessId ? '#1e293b' : '#64748b',
+                                        color: b.id === activeBusinessId ? '#1e293b' : 'var(--color-text-muted)',
                                         cursor: 'pointer', textAlign: 'left'
                                     }}
                                 >

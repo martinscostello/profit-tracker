@@ -131,8 +131,8 @@ export function CompanyProfile() {
                             onClick={() => setIsSwitcherOpen(true)}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                background: '#f1f5f9', border: 'none', padding: '0.5rem 0.75rem',
-                                borderRadius: '0.75rem', color: '#64748b', fontWeight: '600',
+                                background: 'var(--color-bg-subtle)', border: 'none', padding: '0.5rem 0.75rem',
+                                borderRadius: '0.75rem', color: 'var(--color-text-muted)', fontWeight: '600',
                                 fontSize: '0.875rem', cursor: 'pointer'
                             }}
                         >
@@ -154,9 +154,9 @@ export function CompanyProfile() {
                     {/* Authentication Status Card */}
                     <div style={{
                         padding: '1rem',
-                        backgroundColor: currentUser ? '#eff6ff' : '#fefce8',
+                        backgroundColor: currentUser ? 'var(--color-bg-subtle)' : 'var(--color-surface)',
                         borderRadius: '1rem',
-                        border: `1px solid ${currentUser ? '#dbeafe' : '#fef9c3'}`,
+                        border: `1px solid ${currentUser ? 'var(--color-border)' : '#fef9c3'}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                     }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -172,7 +172,7 @@ export function CompanyProfile() {
                                 onClick={handleLogout}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                    padding: '0.5rem 0.75rem', backgroundColor: 'white',
+                                    padding: '0.5rem 0.75rem', backgroundColor: 'var(--color-surface)',
                                     border: '1px solid #e2e8f0', borderRadius: '0.5rem',
                                     color: '#dc2626', fontSize: '0.875rem', fontWeight: '600', cursor: 'pointer'
                                 }}
@@ -292,11 +292,11 @@ export function CompanyProfile() {
                             ) : (
                                 <div style={{
                                     display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                    padding: '1rem', backgroundColor: '#f8fafc',
-                                    borderRadius: '0.75rem', border: '1px solid #e2e8f0'
+                                    padding: '1rem', backgroundColor: 'var(--color-bg-subtle)',
+                                    borderRadius: '0.75rem', border: '1px solid var(--color-border)'
                                 }}>
                                     <SelectedIcon size={24} color={activeColor} />
-                                    <span style={{ fontSize: '1.125rem', fontWeight: '500' }}>{type}</span>
+                                    <span style={{ fontSize: '1.125rem', fontWeight: '500', color: 'var(--color-text)' }}>{type}</span>
                                 </div>
                             )}
                         </div>
@@ -319,7 +319,7 @@ export function CompanyProfile() {
                             style={{
                                 width: '100%',
                                 padding: '1.25rem',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--color-surface)',
                                 borderRadius: '1rem',
                                 border: '1px solid var(--color-border)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -330,7 +330,7 @@ export function CompanyProfile() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <div style={{
                                     width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem',
-                                    backgroundColor: '#ecfdf5', color: '#059669',
+                                    backgroundColor: 'var(--color-bg-subtle)', color: 'var(--color-primary)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
                                     <Users size={20} />
@@ -351,7 +351,7 @@ export function CompanyProfile() {
                         <div style={{
                             marginTop: '2rem',
                             padding: '1.5rem',
-                            backgroundColor: '#FEF2F2',
+                            backgroundColor: 'var(--color-bg-subtle)',
                             borderRadius: '1rem',
                             border: '1px solid #FECACA'
                         }}>
@@ -369,7 +369,7 @@ export function CompanyProfile() {
                                     style={{
                                         width: '100%',
                                         padding: '1rem',
-                                        backgroundColor: '#fff',
+                                        backgroundColor: 'var(--color-surface)',
                                         border: '1px solid #DC2626',
                                         borderRadius: '0.75rem',
                                         color: '#DC2626',
@@ -484,6 +484,6 @@ export function CompanyProfile() {
                     onClose={() => setShowClearSales(false)}
                 />
             </div>
-        </Layout>
+        </Layout >
     );
 }

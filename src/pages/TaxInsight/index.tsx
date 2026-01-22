@@ -21,7 +21,7 @@ const ShareMenu = ({ onClose, onSharePDF, onShareExcel, onShareText }: any) => {
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
         }} onClick={onClose}>
             <div style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-surface)',
                 borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
                 padding: '1.5rem', paddingBottom: '3rem',
                 animation: 'slide-up 0.3s ease-out'
@@ -182,17 +182,22 @@ export function TaxInsight() {
     return (
         <Layout disablePadding showNav={false}>
             <div style={{
-                minHeight: '100vh',
+                height: '100%', // Match parent Layout height
                 backgroundColor: 'var(--color-bg)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden' // Prevent outer scroll
             }}>
-                <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                    {/* Header */}
+                <div style={{ maxWidth: '600px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    {/* Fixed Header */}
                     <div style={{
                         padding: '1rem 1.5rem',
-                        paddingTop: 'calc(3rem + env(safe-area-inset-top))',
+                        paddingTop: 'calc(var(--header-top-spacing) + env(safe-area-inset-top))', // Use global var
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        backgroundColor: 'white',
-                        position: 'sticky', top: 0, zIndex: 10
+                        backgroundColor: 'var(--color-bg)',
+                        borderBottom: '1px solid var(--color-border)',
+                        zIndex: 10,
+                        flexShrink: 0 // Don't shrink header
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <button
@@ -240,7 +245,17 @@ export function TaxInsight() {
                         </div>
                     </div>
 
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    {/* Scrollable Content */}
+                    <div
+                        className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflowY: 'auto', // Enable internal scroll
+                            paddingBottom: '2rem' // Bottom spacer
+                        }}
+                    >
                         {step === 1 && <Screen1_Entry onNext={() => setSearchParams({ step: '2' })} />}
                         {step === 2 && <Screen2_Setup onNext={() => setSearchParams({ step: '3' })} />}
                         {step === 3 && <Screen3_Summary />}

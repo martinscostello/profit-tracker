@@ -1,4 +1,5 @@
 import { X, Check, Lock } from 'lucide-react';
+import { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { CURRENCIES } from '../../constants/currencies';
 
@@ -11,30 +12,80 @@ interface CurrencyModalProps {
 
 export function CurrencyModal({ isOpen, onClose, currentCurrency, onSelect }: CurrencyModalProps) {
     const { showToast } = useToast();
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [offsetY, setOffsetY] = useState(0);
+
+    // Reset offset when opening
+    if (!isOpen && offsetY !== 0) {
+        setOffsetY(0);
+    }
+
     if (!isOpen) return null;
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStart(e.touches[0].clientY);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!touchStart) return;
+        const currentY = e.touches[0].clientY;
+        const diff = currentY - touchStart;
+        if (diff > 0) {
+            setOffsetY(diff);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (offsetY > 100) {
+            onClose(); // Swipe down to close
+        }
+        setOffsetY(0); // Reset or snap back
+        setTouchStart(null);
+    };
 
     return (
         <div style={{
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: `rgba(0,0,0,${Math.max(0, 0.5 - (offsetY / 1000))})`, // Fade out bg
             display: 'flex',
             alignItems: 'flex-end',
-            justifyContent: 'center'
-        }}>
-            <div style={{
-                backgroundColor: 'white',
-                width: '100%',
-                maxWidth: '600px',
-                borderTopLeftRadius: '1.5rem',
-                borderTopRightRadius: '1.5rem',
-                padding: '1.5rem',
-                maxHeight: '80vh',
-                display: 'flex',
-                flexDirection: 'column',
-                animation: 'slideUp 0.3s ease-out'
-            }}>
+            justifyContent: 'center',
+            transition: 'background-color 0.2s'
+        }}
+            onClick={onClose} // Click outside to close
+        >
+            <div
+                onClick={e => e.stopPropagation()} // Prevent click-through closing
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                    backgroundColor: 'var(--color-surface)',
+                    width: '100%',
+                    maxWidth: '600px',
+                    borderTopLeftRadius: '1.5rem',
+                    borderTopRightRadius: '1.5rem',
+                    padding: '1.5rem',
+                    maxHeight: '80vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    animation: 'slideUp 0.3s ease-out',
+                    transform: `translateY(${offsetY}px)`,
+                    transition: touchStart ? 'none' : 'transform 0.2s', // Smooth snap back
+                    position: 'relative'
+                }}>
+                {/* Drag Handle */}
+                <div style={{
+                    width: '40px',
+                    height: '5px',
+                    backgroundColor: '#e2e8f0',
+                    borderRadius: '5rem',
+                    margin: '0 auto 1.5rem auto',
+                    marginTop: '-0.5rem' // Pull it up a bit
+                }} />
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text)' }}>Select Currency</h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', padding: 0 }}>

@@ -97,7 +97,7 @@ export function AddBusiness() {
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 padding: '1rem', borderRadius: '0.75rem',
                                 border: '1px solid var(--color-border)',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--color-surface)',
                                 color: 'var(--color-text)',
                                 cursor: 'pointer',
                                 textAlign: 'left'

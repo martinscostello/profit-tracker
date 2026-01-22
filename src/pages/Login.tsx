@@ -5,11 +5,13 @@ import { useToast } from '../context/ToastContext';
 import { Layout } from '../components/layout/Layout';
 import { GoogleLogin } from '@react-oauth/google';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { SignInWithApple } from '@capacitor-community/apple-sign-in';
+import type { SignInWithAppleResponse, SignInWithAppleOptions } from '@capacitor-community/apple-sign-in';
 import { Capacitor } from '@capacitor/core';
 
 
 export function Login() {
-    const { googleLogin, currentUser } = useAuth();
+    const { googleLogin, appleLogin, currentUser } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
@@ -77,6 +79,30 @@ export function Login() {
                 const errorDetail = err.message || JSON.stringify(err);
                 setError('Google Login Failed: ' + errorDetail);
                 showToast(`Google Sign-in Failed: ${errorDetail}`, "error");
+            }
+        }
+    };
+
+    const handleAppleLogin = async () => {
+        try {
+            const options: SignInWithAppleOptions = {
+                clientId: 'com.brimarcglobal.dailyprofit', // Bundle ID
+                redirectURI: 'https://dailyprofit.app/', // Not used for native but required by type sometimes
+                scopes: 'name email',
+                state: '12345',
+                nonce: 'nonce',
+            };
+
+            const result: SignInWithAppleResponse = await SignInWithApple.authorize(options);
+
+            if (result.response && result.response.identityToken) {
+                await appleLogin(result.response.identityToken, result.response.givenName, result.response.familyName);
+                navigate(from, { replace: true });
+            }
+        } catch (error: any) {
+            console.error("Apple Sign In Failed:", error);
+            if (error.code !== '1001') { // Canceled
+                showToast(`Apple Sign-in Failed: ${error.message}`, "error");
             }
         }
     };
@@ -199,6 +225,35 @@ export function Login() {
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {isNative && (
+                            <button
+                                onClick={handleAppleLogin}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '280px',
+                                    height: '44px',
+                                    backgroundColor: 'black',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '12px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    marginTop: '1rem',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 384 512" style={{ fill: 'white' }}>
+                                    <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 52.3-11.4 69.5-34.3z" />
+                                </svg>
+                                Sign in with Apple
+                            </button>
                         )}
                     </div>
 

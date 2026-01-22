@@ -409,7 +409,7 @@ export function NotificationSettings() {
                     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
                 }} onClick={() => setShowTonePicker(false)}>
                     <div style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--color-surface)',
                         borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
                         padding: '1.5rem', paddingBottom: '3rem',
                         animation: 'slide-up 0.3s ease-out'
@@ -435,7 +435,7 @@ export function NotificationSettings() {
                                         padding: '1rem',
                                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                         borderBottom: '1px solid #f1f5f9',
-                                        backgroundColor: selectedTone.id === tone.id ? '#f0fdf4' : 'white',
+                                        backgroundColor: selectedTone.id === tone.id ? '#f0fdf4' : 'var(--color-surface)',
                                         color: selectedTone.id === tone.id ? '#166534' : 'inherit',
                                         borderRadius: '0.75rem',
                                         marginBottom: '0.5rem',

@@ -41,8 +41,8 @@ export function BottomNav() {
                 width: '100%',
                 maxWidth: '100vw',
                 margin: 0,
-                padding: '0.5rem 0', // Remove horizontal padding as grid handles it
-                paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))',
+                padding: '0.5rem 0', // Grid handles internal spacing
+                paddingBottom: '10px', // Lifted 10px from bottom for safety/aesthetics
                 boxSizing: 'border-box',
                 backgroundColor: 'var(--color-surface)',
                 borderTop: '1px solid var(--color-border)',
@@ -161,6 +161,7 @@ export function BottomNav() {
 
                                 {/* Main FAB Button */}
                                 <button
+                                    className="fab-add-sale"
                                     onClick={() => setIsFabOpen(!isFabOpen)}
                                     style={{
                                         backgroundColor: isFabOpen ? '#ef4444' : 'var(--color-primary)', // Red when open
@@ -205,7 +206,7 @@ export function BottomNav() {
                                 gap: '0.25rem',
                                 marginTop: '0.25rem',
                                 width: '100%',
-                                padding: '0.5rem 0'
+                                padding: '0.5rem 0' // Balanced padding
                             }}
                         >
                             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />

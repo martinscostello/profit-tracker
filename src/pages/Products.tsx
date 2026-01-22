@@ -6,11 +6,13 @@ import { useData } from '../context/DataContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
-import { Plus, Search, Tag, Upload, RefreshCw } from 'lucide-react';
+import { Plus, Search, Tag, Upload } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { PinModal } from '../components/ui/PinModal';
 import { SheetLinkModal } from '../components/products/SheetLinkModal';
 import { GoogleSheetsService } from '../services/GoogleSheetsService';
+import { BucketFAB } from '../components/ui/BucketFAB';
+import { CloudSyncButton } from '../components/ui/CloudSyncButton';
 
 export function Products() {
     const { products, business, addProduct, updateProduct } = useData();
@@ -300,26 +302,16 @@ export function Products() {
 
                         {can('canAddProducts') && (
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button
+                                <CloudSyncButton
                                     onClick={handleManualSync}
-                                    style={{
-                                        backgroundColor: 'white',
-                                        color: 'var(--color-text)',
-                                        border: '1px solid var(--color-border)',
-                                        width: '2.5rem', height: '2.5rem',
-                                        borderRadius: '50%',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer'
-                                    }}
-                                    title="Sync now"
-                                >
-                                    <RefreshCw size={22} className={isSyncing ? "spin-slick" : ""} />
-                                </button>
+                                    isSyncing={isSyncing}
+                                />
 
                                 <button
+                                    id="import-btn"
                                     onClick={() => setIsImportModalOpen(true)}
                                     style={{
-                                        backgroundColor: 'white',
+                                        backgroundColor: 'var(--color-surface)',
                                         color: 'var(--color-text)',
                                         border: '1px solid var(--color-border)',
                                         padding: '0.5rem 1rem',
@@ -334,6 +326,7 @@ export function Products() {
                                     <Upload size={16} /> {linkedSheetName ? 'Change Sheet' : 'Import'}
                                 </button>
                                 <button
+                                    id="add-product-btn"
                                     onClick={() => navigate('/products/add')}
                                     style={{
                                         backgroundColor: 'var(--color-primary)',
@@ -374,7 +367,8 @@ export function Products() {
                                 padding: '0.75rem 0.75rem 0.75rem 2.5rem',
                                 borderRadius: '0.75rem',
                                 border: '1px solid var(--color-border)',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--color-surface)',
+                                color: 'var(--color-text)',
                                 fontSize: '1rem',
                                 outline: 'none'
                             }}
@@ -485,6 +479,7 @@ export function Products() {
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 .spin-slick { animation: spin 1s linear infinite; }
             `}</style>
+            <BucketFAB />
         </Layout >
     );
 }

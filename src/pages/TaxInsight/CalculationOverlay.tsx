@@ -93,7 +93,7 @@ export function CalculationOverlay({ onComplete }: Props) {
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 9999,
-            backgroundColor: 'white',
+            backgroundColor: 'var(--color-bg)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'sans-serif'
         }}>

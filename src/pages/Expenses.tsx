@@ -168,7 +168,8 @@ export function Expenses() {
                                                 padding: '1rem',
                                                 borderRadius: '0.75rem',
                                                 border: '1px solid var(--color-border)',
-                                                backgroundColor: 'white',
+                                                backgroundColor: 'var(--color-surface)',
+                                                color: 'var(--color-text)',
                                                 fontSize: '1rem',
                                                 appearance: 'none',
                                                 cursor: 'pointer'

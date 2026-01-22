@@ -3,6 +3,7 @@ import { X, Lock, Share2 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/format';
+import { getStartOfWeek, getStartOfMonth } from '../../utils/dateUtils';
 import { DateRangeModal } from './DateRangeModal';
 
 // Export Libraries
@@ -54,11 +55,11 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
     if (!can('canViewReports')) {
         return (
             <div style={{ position: 'fixed', inset: 0, zIndex: 10001, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '1rem', textAlign: 'center' }}>
-                    <Lock size={48} color="#94a3b8" style={{ margin: '0 auto', marginBottom: '1rem' }} />
+                <div style={{ backgroundColor: 'var(--color-surface)', padding: '2rem', borderRadius: '1rem', textAlign: 'center' }}>
+                    <Lock size={48} color="var(--color-text-muted)" style={{ margin: '0 auto', marginBottom: '1rem' }} />
                     <h3>Access Denied</h3>
-                    <p style={{ color: '#64748b', marginBottom: '1rem' }}>You do not have permission to view reports.</p>
-                    <button onClick={onClose} style={{ padding: '0.5rem 1rem', background: '#e2e8f0', border: 'none', borderRadius: '0.5rem' }}>Close</button>
+                    <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }}>You do not have permission to view reports.</p>
+                    <button onClick={onClose} style={{ padding: '0.5rem 1rem', background: 'var(--color-bg-subtle)', border: 'none', borderRadius: '0.5rem' }}>Close</button>
                 </div>
             </div>
         )
@@ -74,11 +75,12 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
         if (reportType === 'daily') return sale.date.startsWith(today);
 
         if (reportType === 'weekly') {
-            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return saleDate >= oneWeekAgo;
+            const startOfWeek = getStartOfWeek(now);
+            return saleDate >= startOfWeek;
         }
         if (reportType === 'monthly') {
-            return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+            const startOfMonth = getStartOfMonth(now);
+            return saleDate >= startOfMonth;
         }
         if (reportType === 'custom' && dateRange.start && dateRange.end) {
             return saleDateStr >= dateRange.start && saleDateStr <= dateRange.end;
@@ -95,11 +97,12 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
         if (reportType === 'daily') return expense.date.startsWith(today);
 
         if (reportType === 'weekly') {
-            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return expenseDate >= oneWeekAgo;
+            const startOfWeek = getStartOfWeek(now);
+            return expenseDate >= startOfWeek;
         }
         if (reportType === 'monthly') {
-            return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear();
+            const startOfMonth = getStartOfMonth(now);
+            return expenseDate >= startOfMonth;
         }
         if (reportType === 'custom' && dateRange.start && dateRange.end) {
             return expenseDateStr >= dateRange.start && expenseDateStr <= dateRange.end;
@@ -362,7 +365,7 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                 backgroundColor: 'rgba(0,0,0,0.5)'
             }}>
                 <div style={{
-                    backgroundColor: 'white', width: '100%', maxWidth: '600px',
+                    backgroundColor: 'var(--color-surface)', width: '100%', maxWidth: '600px',
                     borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
                     maxHeight: '90vh',
                     display: 'flex', flexDirection: 'column',
@@ -375,11 +378,11 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                         alignItems: 'center',
                         padding: '1.5rem',
                         paddingBottom: '1rem',
-                        borderBottom: '1px solid #f1f5f9'
+                        borderBottom: '1px solid var(--color-border)'
                     }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Reports Center</h2>
                         <button onClick={onClose} style={{ background: 'none', border: 'none' }}>
-                            <X size={24} color="#64748b" />
+                            <X size={24} color="var(--color-text-muted)" />
                         </button>
                     </div>
 
@@ -400,8 +403,8 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                                         onClick={() => handleReportTypeChange(type)}
                                         style={{
                                             flex: '0 0 auto', padding: '0.75rem 1rem', borderRadius: '0.75rem',
-                                            backgroundColor: reportType === type ? 'var(--color-primary)' : '#f1f5f9',
-                                            color: reportType === type ? 'white' : '#64748b',
+                                            backgroundColor: reportType === type ? 'var(--color-primary)' : 'var(--color-bg-subtle)',
+                                            color: reportType === type ? 'white' : 'var(--color-text-muted)',
                                             border: 'none', fontWeight: '600', textTransform: 'capitalize',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                                             opacity: isLocked ? 0.7 : 1
@@ -416,29 +419,29 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
 
                         {/* Stats Card */}
                         <div style={{
-                            backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '1rem',
+                            backgroundColor: 'var(--color-bg-subtle)', padding: '1.5rem', borderRadius: '1rem',
                             marginBottom: '1.5rem', border: '1px solid #e2e8f0'
                         }}>
                             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                                <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>
                                     Net Profit
                                     {reportType === 'custom' && <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>({dateRange.start} - {dateRange.end})</div>}
                                 </div>
                                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
                                     {formatCurrency(netProfit)}
                                 </div>
-                                <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
                                     Gross: {formatCurrency(stats.grossProfit)}
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Revenue</div>
+                                <div style={{ backgroundColor: 'var(--color-surface)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Revenue</div>
                                     <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{formatCurrency(stats.revenue)}</div>
                                 </div>
-                                <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Expenses</div>
+                                <div style={{ backgroundColor: 'var(--color-surface)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Expenses</div>
                                     <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{formatCurrency(totalExpenses)}</div>
                                 </div>
                             </div>
@@ -447,7 +450,7 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                         {/* Export Section */}
                         <div style={{
                             border: '1px solid #e2e8f0', borderRadius: '1rem', padding: '1.5rem',
-                            backgroundColor: !business.isPro ? '#f8fafc' : 'white',
+                            backgroundColor: !business.isPro ? 'var(--color-bg-subtle)' : 'var(--color-surface)',
                             position: 'relative', overflow: 'hidden'
                         }}>
                             {!business.isPro && (
@@ -461,7 +464,7 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                                     }}
                                 >
                                     <Lock size={32} color="#EAB308" style={{ marginBottom: '0.5rem' }} />
-                                    <span style={{ fontWeight: 'bold', color: '#1e293b' }}>Upgrade to Export Reports</span>
+                                    <span style={{ fontWeight: 'bold', color: 'var(--color-text)' }}>Upgrade to Export Reports</span>
                                 </div>
                             )}
 
@@ -469,7 +472,7 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.5rem' }}>Select Format</label>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Select Format</label>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                                         {(['PDF', 'EXCEL', 'WORD'] as const).map(fmt => (
                                             <button
@@ -478,8 +481,8 @@ export function ReportsModal({ isOpen, onClose, onUpgrade }: ReportsModalProps) 
                                                 style={{
                                                     padding: '0.75rem', borderRadius: '0.75rem',
                                                     border: exportFormat === fmt ? '2px solid var(--color-primary)' : '1px solid #e2e8f0',
-                                                    backgroundColor: exportFormat === fmt ? '#f3e8ff' : 'white',
-                                                    color: exportFormat === fmt ? 'var(--color-primary)' : '#64748b',
+                                                    backgroundColor: exportFormat === fmt ? '#f3e8ff' : 'var(--color-surface)',
+                                                    color: exportFormat === fmt ? 'var(--color-primary)' : 'var(--color-text-muted)',
                                                     fontWeight: '600', fontSize: '0.875rem'
                                                 }}
                                             >

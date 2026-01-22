@@ -82,34 +82,24 @@ export function calculateTax(
     const exemptItems: { name: string; amount: number; reason: string }[] = [];
     const taxableItems: { name: string; amount: number; reason: string }[] = [];
 
-    if (formatSettings.hasExemptItems === 'YES') {
-        sales.forEach(sale => {
-            if (isProductExempt(sale.productName)) {
-                exemptSales += sale.revenue;
-                exemptItems.push({
-                    name: sale.productName,
-                    amount: sale.revenue,
-                    reason: 'Matches exempt category (Food/Medical)'
-                });
-            } else {
-                taxableSales += sale.revenue;
-                taxableItems.push({
-                    name: sale.productName,
-                    amount: sale.revenue,
-                    reason: 'Standard Taxable Item'
-                });
-            }
-        });
-    } else {
-        taxableSales = totalRevenue;
-        sales.forEach(sale => {
+    // ALWAYS Scan for Exemptions (Auto-Scan)
+    sales.forEach(sale => {
+        if (isProductExempt(sale.productName)) {
+            exemptSales += sale.revenue;
+            exemptItems.push({
+                name: sale.productName,
+                amount: sale.revenue,
+                reason: 'Matches exempt category (Food/Medical)'
+            });
+        } else {
+            taxableSales += sale.revenue;
             taxableItems.push({
                 name: sale.productName,
                 amount: sale.revenue,
                 reason: 'Standard Taxable Item'
             });
-        });
-    }
+        }
+    });
 
     // 4. VAT Calculation (7.5%)
     // If exempt by turnover, VAT is 0.

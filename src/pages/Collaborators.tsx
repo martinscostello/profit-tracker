@@ -120,7 +120,7 @@ export function Collaborators() {
                                     onClick={() => handleCollaboratorClick(member)}
                                     style={{
                                         padding: '1rem',
-                                        backgroundColor: 'white',
+                                        backgroundColor: 'var(--color-surface)',
                                         borderRadius: '1rem',
                                         border: '1px solid var(--color-border)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
