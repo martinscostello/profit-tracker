@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema({
     displayName: { type: String },
     photoURL: { type: String },
     lastActive: { type: Date, default: Date.now },
+    otp: { type: String },
+    otpExpires: { type: Date },
+    isVerified: { type: Boolean, default: false },
     sharedBusinesses: [{
         id: { type: String },
         name: { type: String }

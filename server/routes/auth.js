@@ -12,18 +12,147 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const router = express.Router();
 
 // Register
+// Register
 router.post('/register', async (req, res) => {
     try {
         const { email, password, displayName } = req.body;
-        const user = new User({ email, password, displayName });
+
+        // check if user exists
+        let user = await User.findOne({ email });
+        if (user && user.isVerified) {
+            return res.status(400).send({ error: 'User already exists' });
+        }
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+        if (!user) {
+            user = new User({ email, password, displayName, otp, otpExpires, isVerified: false });
+        } else {
+            // Update unverified user
+            user.password = password;
+            user.displayName = displayName;
+            user.otp = otp;
+            user.otpExpires = otpExpires;
+        }
+
+        await user.save();
+
+        // TODO: Integrate Nodemailer or SendGrid here
+        console.log(`[AUTH] OTP for ${email}: ${otp}`);
+
+        res.status(200).send({ message: 'Verification code sent', email });
+    } catch (error) {
+        console.error("Register Error:", error);
+        res.status(400).send(error);
+    }
+});
+
+// Verify Email
+router.post('/verify-email', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).send({ error: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).send({ error: 'User already verified' });
+        }
+
+        if (user.otp !== code || user.otpExpires < Date.now()) {
+            return res.status(400).send({ error: 'Invalid or expired OTP' });
+        }
+
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpires = undefined;
         await user.save();
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
-        res.status(201).send({ user, token });
+        res.send({ user, token });
     } catch (error) {
         res.status(400).send(error);
     }
 });
+
+// Resend OTP
+router.post('/resend-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).send({ error: 'User not found' });
+        if (user.isVerified) return res.status(400).send({ error: 'User already verified' });
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        await user.save();
+
+        console.log(`[AUTH] Resent OTP for ${email}: ${otp}`);
+        res.send({ message: 'OTP resent' });
+
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// Verify Email
+router.post('/verify-email', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).send({ error: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).send({ error: 'User already verified' });
+        }
+
+        if (user.otp !== code || user.otpExpires < Date.now()) {
+            return res.status(400).send({ error: 'Invalid or expired OTP' });
+        }
+
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpires = undefined;
+        await user.save();
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
+        res.send({ user, token });
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// Resend OTP
+router.post('/resend-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).send({ error: 'User not found' });
+        if (user.isVerified) return res.status(400).send({ error: 'User already verified' });
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        await user.save();
+
+        console.log(`[AUTH] Resent OTP for ${email}: ${otp}`);
+        res.send({ message: 'OTP resent' });
+
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
 
 // Login
 router.post('/login', async (req, res) => {
@@ -33,6 +162,10 @@ router.post('/login', async (req, res) => {
 
         if (!user || !(await user.comparePassword(password))) {
             return res.status(401).send({ error: 'Login failed! Check authentication credentials' });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).send({ error: 'Email not verified. Please verify your account.' });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
